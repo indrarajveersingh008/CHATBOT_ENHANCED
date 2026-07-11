@@ -2,10 +2,36 @@
    AI NEXUS — RESPONSIVE
 ====================================== */
 
+@media (max-width: 1024px) {
+    .topbar {
+        padding: 18px 24px;
+    }
+
+    .chat-box {
+        padding: 20px;
+    }
+
+    .input-area {
+        padding: 16px 18px;
+    }
+}
+
 @media (max-width: 768px) {
+    .app {
+        flex-direction: column;
+    }
+
     .sidebar {
-        width: 90px;
-        padding: 15px 8px;
+        width: 100%;
+        padding: 15px 12px;
+        border-right: none;
+        border-bottom: 3px solid #22201e;
+    }
+
+    .sidebar nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+        margin-top: 16px;
     }
 
     .sidebar .logo h2,
@@ -45,6 +71,39 @@
     }
 
     .input-area {
-        padding: 14px;
+        padding: 12px;
+        gap: 8px;
+        align-items: flex-end;
+    }
+
+    .input-area button {
+        width: 48px;
+        height: 48px;
+        font-size: 18px;
+    }
+
+    .input-area textarea {
+        min-height: 48px;
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .topbar {
+        height: auto;
+        padding: 14px 16px;
+    }
+
+    .chat-box {
+        padding: 12px;
+        gap: 16px;
+    }
+
+    .message {
+        max-width: 95%;
+    }
+
+    .input-area {
+        padding: 10px;
     }
 }

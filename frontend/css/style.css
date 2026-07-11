@@ -15,6 +15,10 @@ body {
 .app {
     display: flex;
     height: 100vh;
+    min-height: 100vh;
+    width: 100vw;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .sidebar {
@@ -107,6 +111,7 @@ nav {
 
 .main {
     flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     background: #8c8985;
@@ -137,11 +142,13 @@ nav {
 
 .chat-box {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     padding: 30px;
     display: flex;
     flex-direction: column;
     gap: 24px;
+    width: 100%;
 }
 
 .message {
@@ -274,16 +281,19 @@ nav {
 }
 
 .input-area {
-    padding: 25px;
+    padding: 20px 24px;
     display: flex;
-    gap: 15px;
+    gap: 12px;
+    align-items: flex-end;
     background: #b8b4af;
     border-top: 3px solid #22201e;
+    width: 100%;
 }
 
-.input-area input {
+.input-area textarea {
     flex: 1;
-    padding: 16px;
+    min-width: 0;
+    padding: 14px 16px;
     border-radius: 8px;
     border: 3px solid #22201e;
     background: #fbfaf7;
@@ -291,9 +301,16 @@ nav {
     font-size: 16px;
     outline: none;
     box-shadow: inset 2px 2px 0px rgba(0,0,0,0.1);
+    resize: none;
+    min-height: 56px;
+    max-height: 180px;
+    line-height: 1.45;
+    font-family: inherit;
+    overflow-y: auto;
+    transition: height 180ms ease, border-color 180ms ease;
 }
 
-.input-area input:focus {
+.input-area textarea:focus {
     border-color: #6366f1;
 }
 

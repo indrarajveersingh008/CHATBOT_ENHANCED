@@ -586,12 +586,23 @@ async function retryResponse(botMessageEl) {
 
 sendBtn.addEventListener("click", sendMessage);
 
+function autoResizeInput() {
+    messageInput.style.height = "auto";
+    const maxHeight = 180;
+    const nextHeight = Math.min(messageInput.scrollHeight, maxHeight);
+    messageInput.style.height = `${nextHeight}px`;
+}
+
+messageInput.addEventListener("input", autoResizeInput);
 messageInput.addEventListener("keydown", function (event) {
-    if (event.key === "Enter") {
+    if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
         sendMessage();
+        messageInput.style.height = "56px";
     }
 });
+
+autoResizeInput();
 
 clearBtn.addEventListener("click", function () {
     if (!confirm("Start a new chat?")) return;
