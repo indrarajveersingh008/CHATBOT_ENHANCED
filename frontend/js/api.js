@@ -8,7 +8,7 @@ function getApiBaseUrl() {
     return localStorage.getItem("customBackendUrl") || 
         ((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.protocol === "file:")
         ? "http://127.0.0.1:8000"
-        : "https://chatbot-41tu.onrender.com");
+        : "https://chatbot-enhanced.onrender.com");
 }
 
 async function handleResponse(response) {
