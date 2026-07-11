@@ -51,6 +51,13 @@ def ask_ai(
     system_prompt = SYSTEM_PROMPT
     if files_context:
         system_prompt += f"\n\n--- UPLOADED FILES CONTEXT ---\nYou have access to the following files uploaded by the user. Use this information to answer their questions if relevant:\n{files_context}\n-----------------------------"
+    if attached_images:
+        system_prompt += (
+            "\n\nIMAGE ANALYSIS:\n"
+            "The user has attached one or more images to this message. You CAN see and analyze them. "
+            "Describe what you see and answer questions about the image content accurately. "
+            "Do not say you cannot view or analyze images."
+        )
 
     messages = [{"role": "system", "content": system_prompt}]
 

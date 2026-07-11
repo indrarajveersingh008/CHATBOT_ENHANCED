@@ -10,6 +10,14 @@ class Settings:
     MODEL_NAME: str = os.getenv("MODEL_NAME", "deepseek/deepseek-chat-v3-0324")
     MAX_TOKENS: int = int(os.getenv("MAX_TOKENS", "1024"))
 
+    # Models that can analyze uploaded images (vision/multimodal)
+    VISION_CAPABLE_MODELS: frozenset[str] = frozenset({
+        "google/gemini-2.5-flash",
+        "openai/gpt-4o-mini",
+        "openai/gpt-4o",
+    })
+    DEFAULT_VISION_MODEL: str = os.getenv("DEFAULT_VISION_MODEL", "google/gemini-2.5-flash")
+
     # SQLite by default so the project runs with zero extra setup.
     # Set DATABASE_URL on Render/production to point at Postgres instead.
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./ai_nexus.db")

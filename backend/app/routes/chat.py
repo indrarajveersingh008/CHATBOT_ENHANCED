@@ -10,6 +10,7 @@ from ..database.db import get_db
 from ..models.models import Conversation, Message, UploadedFile
 from ..config.settings import settings
 from ..utils.file_reader import read_file_content
+from ..utils.helpers import is_image_file, guess_image_mime_type
 from ..ai.client import ask_ai, generate_conversation_title
 
 router = APIRouter(tags=["chat"])
@@ -74,8 +75,7 @@ def chat(request: ChatRequest, db: Session = Depends(get_db)):
         MAX_TOTAL_CHARS = 200000  # Context length ceiling to prevent overflow
 
         for f_record in uploaded_files:
-            # Skip image files from text context extraction since they are handled natively by multimodal models
-            if f_record.content_type and f_record.content_type.startswith("image/"):
+            if is_image_file(f_record.filename, f_record.content_type):
                 continue
 
             file_path = os.path.join(settings.UPLOAD_DIR, f_record.stored_name)
@@ -97,7 +97,7 @@ def chat(request: ChatRequest, db: Session = Depends(get_db)):
         attached_images = []
         if db_files:
             import base64
-            image_files = [f for f in db_files if f.content_type and f.content_type.startswith("image/")]
+            image_files = [f for f in db_files if is_image_file(f.filename, f.content_type)]
             for img_file in image_files:
                 file_path = os.path.join(settings.UPLOAD_DIR, img_file.stored_name)
                 if os.path.exists(file_path):
@@ -105,11 +105,15 @@ def chat(request: ChatRequest, db: Session = Depends(get_db)):
                         with open(file_path, "rb") as image_file:
                             encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
                             attached_images.append({
-                                "content_type": img_file.content_type,
+                                "content_type": guess_image_mime_type(img_file.filename, img_file.content_type),
                                 "base64_data": encoded_string
                             })
                     except Exception as e:
                         print(f"Error encoding image {img_file.filename}: {e}")
+
+        if attached_images and requested_model not in settings.VISION_CAPABLE_MODELS:
+            print(f"Auto-switching to vision model for image analysis (was: {requested_model})")
+            requested_model = settings.DEFAULT_VISION_MODEL
 
         reply = ask_ai(request.message, history, files_context, requested_model, attached_images=attached_images)
 

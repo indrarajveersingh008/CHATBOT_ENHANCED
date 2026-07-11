@@ -15,6 +15,25 @@ const chatFilePreviews = document.getElementById("chatFilePreviews");
 
 let attachedFiles = [];
 
+const VISION_MODELS = new Set(["google/gemini-2.5-flash", "openai/gpt-4o-mini", "openai/gpt-4o"]);
+const DEFAULT_VISION_MODEL = "google/gemini-2.5-flash";
+
+function fileIsImage(file) {
+    const ext = file.name.split(".").pop().toLowerCase();
+    return file.type.startsWith("image/") || ["jpg", "jpeg", "png", "webp", "gif", "bmp"].includes(ext);
+}
+
+function ensureVisionModelForAttachments(files) {
+    if (!files.some(fileIsImage)) return;
+
+    const current = localStorage.getItem("selectedModel") || "deepseek/deepseek-chat-v3-0324";
+    if (VISION_MODELS.has(current)) return;
+
+    localStorage.setItem("selectedModel", DEFAULT_VISION_MODEL);
+    const modelSelect = document.getElementById("modelSelect");
+    if (modelSelect) modelSelect.value = DEFAULT_VISION_MODEL;
+}
+
 // Shared app-wide state other modules (memory.js, ui.js) also read/write.
 const AppState = {
     _currentConversationId: localStorage.getItem("currentConversationId") || null,
@@ -209,6 +228,7 @@ async function sendMessage() {
     showTyping();
 
     try {
+        ensureVisionModelForAttachments(filesToSend);
         const selectedModel = localStorage.getItem("selectedModel") || "deepseek/deepseek-chat-v3-0324";
         const data = await Api.sendMessage(text, AppState.currentConversationId, selectedModel, fileIds);
 
@@ -312,6 +332,7 @@ if (chatAttachBtn && chatFileInput) {
         const newFiles = Array.from(chatFileInput.files);
         if (newFiles.length > 0) {
             attachedFiles = attachedFiles.concat(newFiles);
+            ensureVisionModelForAttachments(attachedFiles);
             renderFilePreviews();
         }
         chatFileInput.value = ""; // Reset file input
