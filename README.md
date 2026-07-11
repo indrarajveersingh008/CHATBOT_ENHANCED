@@ -55,7 +55,7 @@ Open `frontend/index.html` directly, or serve the folder with any static server
 
 ## Deploying
 
-- **Backend (Render):** start command `uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`.
+- **Backend (Render):** start command `python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`.
   Set `OPENROUTER_API_KEY` in Render's environment variables — don't commit `.env`.
   Render's free-tier disk is wiped on every redeploy, so the SQLite DB and any
   uploaded files reset then too. For anything you need to keep long-term, point
