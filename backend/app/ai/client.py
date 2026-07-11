@@ -32,7 +32,13 @@ Explain what you have drawn, then display the image block.
 """
 
 
-def ask_ai(message: str, history: list[dict] | None = None, files_context: str | None = None, model_name: str | None = None) -> str:
+def ask_ai(
+    message: str,
+    history: list[dict] | None = None,
+    files_context: str | None = None,
+    model_name: str | None = None,
+    attached_images: list[dict] | None = None
+) -> str:
     """
     Send a message (plus any prior turns for context) to the model and
     return the reply text. Raises ValueError on an empty/invalid response.
@@ -40,6 +46,7 @@ def ask_ai(message: str, history: list[dict] | None = None, files_context: str |
     history: list of {"sender": "user"|"bot", "content": str}, oldest first.
     files_context: optional text context extracted from uploaded files.
     model_name: custom model string to route the request to OpenRouter.
+    attached_images: optional list of {"content_type": str, "base64_data": str}
     """
     system_prompt = SYSTEM_PROMPT
     if files_context:
@@ -52,7 +59,18 @@ def ask_ai(message: str, history: list[dict] | None = None, files_context: str |
             role = "assistant" if turn.get("sender") == "bot" else "user"
             messages.append({"role": role, "content": turn.get("content", "")})
 
-    messages.append({"role": "user", "content": message})
+    if attached_images:
+        content_parts = [{"type": "text", "text": message}]
+        for img in attached_images:
+            content_parts.append({
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:{img['content_type']};base64,{img['base64_data']}"
+                }
+            })
+        messages.append({"role": "user", "content": content_parts})
+    else:
+        messages.append({"role": "user", "content": message})
 
     chosen_model = model_name or settings.MODEL_NAME
 

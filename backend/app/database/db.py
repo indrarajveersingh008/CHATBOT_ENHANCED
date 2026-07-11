@@ -25,3 +25,26 @@ def init_db():
     """Create tables on startup if they don't exist yet."""
     from ..models import models  # noqa: F401 - import so tables register with Base
     Base.metadata.create_all(bind=engine)
+    upgrade_db_schema()
+
+
+def upgrade_db_schema():
+    """Run lightweight schema migrations to add missing columns to uploaded_files table."""
+    from sqlalchemy import inspect, text
+    inspector = inspect(engine)
+    columns = [col["name"] for col in inspector.get_columns("uploaded_files")]
+
+    with engine.begin() as conn:
+        if "conversation_id" not in columns:
+            try:
+                conn.execute(text("ALTER TABLE uploaded_files ADD COLUMN conversation_id INTEGER REFERENCES conversations(id) ON DELETE CASCADE"))
+                print("Migration: added column conversation_id to uploaded_files")
+            except Exception as e:
+                print(f"Migration: could not add conversation_id: {e}")
+        if "message_id" not in columns:
+            try:
+                conn.execute(text("ALTER TABLE uploaded_files ADD COLUMN message_id INTEGER REFERENCES messages(id) ON DELETE CASCADE"))
+                print("Migration: added column message_id to uploaded_files")
+            except Exception as e:
+                print(f"Migration: could not add message_id: {e}")
+

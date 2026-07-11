@@ -9,6 +9,12 @@ const messageInput = document.getElementById("message");
 const sendBtn = document.getElementById("sendBtn");
 const clearBtn = document.getElementById("clearBtn");
 
+const chatFileInput = document.getElementById("chatFileInput");
+const chatAttachBtn = document.getElementById("chatAttachBtn");
+const chatFilePreviews = document.getElementById("chatFilePreviews");
+
+let attachedFiles = [];
+
 // Shared app-wide state other modules (memory.js, ui.js) also read/write.
 const AppState = {
     currentConversationId: null
@@ -20,6 +26,13 @@ marked.setOptions({ breaks: true, gfm: true });
 
 function formatMessage(text) {
     return marked.parse(text);
+}
+
+function escapeHtml(str) {
+    if (!str) return "";
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
 }
 
 function saveHistory() {
@@ -34,16 +47,60 @@ function scrollBottom() {
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-function addMessage(text, sender, save = true) {
+function addMessage(text, sender, save = true, files = null) {
     const message = document.createElement("div");
     message.className = `message ${sender}`;
 
     const avatar = sender === "bot" ? "🤖" : "👤";
 
+    let attachmentsHtml = "";
+    if (files && files.length > 0) {
+        attachmentsHtml = `<div class="message-attachments">`;
+        files.forEach((f) => {
+            const ext = f.filename.split('.').pop().toLowerCase();
+            const downloadUrl = Api.fileDownloadUrl(f.id);
+            
+            const isImage = f.content_type?.startsWith("image/") || ["jpg", "jpeg", "png", "webp", "gif"].includes(ext);
+            const isVideo = f.content_type?.startsWith("video/") || ["mp4", "webm", "ogg", "mov"].includes(ext);
+            
+            if (isImage) {
+                attachmentsHtml += `
+                    <a href="${downloadUrl}" target="_blank" class="attachment-item image-attachment">
+                        <img src="${downloadUrl}" alt="${escapeHtml(f.filename)}" title="${escapeHtml(f.filename)}">
+                    </a>
+                `;
+            } else if (isVideo) {
+                attachmentsHtml += `
+                    <div class="attachment-item video-attachment">
+                        <video src="${downloadUrl}" controls preload="metadata"></video>
+                    </div>
+                `;
+            } else {
+                let icon = "📄";
+                if (ext === "pdf") icon = "📕";
+                else if (["doc", "docx"].includes(ext)) icon = "📘";
+                else if (["xls", "xlsx", "csv"].includes(ext)) icon = "📗";
+                else if (["zip", "rar", "tar", "gz"].includes(ext)) icon = "📦";
+                else if (["mp3", "wav", "ogg", "m4a"].includes(ext)) icon = "🎵";
+                
+                attachmentsHtml += `
+                    <a href="${downloadUrl}" target="_blank" class="attachment-item">
+                        <span class="attachment-icon">${icon}</span>
+                        <span class="attachment-name">${escapeHtml(f.filename)}</span>
+                    </a>
+                `;
+            }
+        });
+        attachmentsHtml += `</div>`;
+    }
+
     message.innerHTML = `
         <div class="avatar">${avatar}</div>
         <div class="content">
-            <div class="bubble">${formatMessage(text)}</div>
+            <div class="bubble">
+                ${formatMessage(text)}
+                ${attachmentsHtml}
+            </div>
             <div class="message-footer">
                 <div class="time">${currentTime()}</div>
                 ${sender === "bot" ? `<button class="copy-btn"><span>📋</span><span>Copy</span></button>` : ""}
@@ -74,7 +131,7 @@ function addMessage(text, sender, save = true) {
     scrollBottom();
 
     if (save) {
-        chatHistory.push({ sender, text });
+        chatHistory.push({ sender, text, files });
         saveHistory();
     }
 }
@@ -102,23 +159,54 @@ function hideTyping() {
 
 async function sendMessage() {
     const text = messageInput.value.trim();
-    if (text === "") return;
+    if (text === "" && attachedFiles.length === 0) return;
 
-    addMessage(text, "user");
+    // Save attached files and reset input
+    const filesToSend = [...attachedFiles];
+    attachedFiles = [];
+    renderFilePreviews();
+
+    // Disable input buttons
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = "⏳";
+    if (chatAttachBtn) chatAttachBtn.disabled = true;
+    showTyping();
+
+    const fileIds = [];
+    const uploadedFilesMeta = [];
+
+    // Upload any attached files first
+    if (filesToSend.length > 0) {
+        for (let file of filesToSend) {
+            try {
+                const res = await Api.uploadFile(file);
+                fileIds.push(res.id);
+                uploadedFilesMeta.push(res);
+            } catch (err) {
+                console.error("Attachment upload failed:", err);
+                alert(`Upload failed for "${file.name}": ${err.message}`);
+                // Re-enable input UI
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = "➤";
+                if (chatAttachBtn) chatAttachBtn.disabled = false;
+                hideTyping();
+                return;
+            }
+        }
+    }
+
+    addMessage(text, "user", true, uploadedFilesMeta);
     messageInput.value = "";
     messageInput.focus();
 
-    sendBtn.disabled = true;
-    sendBtn.innerHTML = "⏳";
-    showTyping();
-
     try {
         const selectedModel = localStorage.getItem("selectedModel") || "deepseek/deepseek-chat-v3-0324";
-        const data = await Api.sendMessage(text, AppState.currentConversationId, selectedModel);
+        const data = await Api.sendMessage(text, AppState.currentConversationId, selectedModel, fileIds);
 
         hideTyping();
         sendBtn.disabled = false;
         sendBtn.innerHTML = "➤";
+        if (chatAttachBtn) chatAttachBtn.disabled = false;
 
         if (!data.reply) {
             throw new Error("No 'reply' received from backend.");
@@ -140,10 +228,85 @@ async function sendMessage() {
         hideTyping();
         sendBtn.disabled = false;
         sendBtn.innerHTML = "➤";
+        if (chatAttachBtn) chatAttachBtn.disabled = false;
 
         addMessage("⚠️ Sorry, something went wrong while contacting the AI.", "bot");
         console.error("Frontend Error:", error);
     }
+}
+
+function renderFilePreviews() {
+    if (!chatFilePreviews) return;
+
+    if (attachedFiles.length === 0) {
+        chatFilePreviews.classList.add("hidden");
+        chatFilePreviews.innerHTML = "";
+        return;
+    }
+
+    chatFilePreviews.classList.remove("hidden");
+    chatFilePreviews.innerHTML = "";
+
+    attachedFiles.forEach((file, index) => {
+        const card = document.createElement("div");
+        card.className = "chat-preview-card";
+
+        const ext = file.name.split('.').pop().toLowerCase();
+        const isImage = file.type.startsWith("image/") || ["jpg", "jpeg", "png", "webp", "gif"].includes(ext);
+
+        if (isImage) {
+            const img = document.createElement("img");
+            img.src = URL.createObjectURL(file);
+            img.onload = () => {
+                URL.revokeObjectURL(img.src);
+            };
+            card.appendChild(img);
+        } else {
+            const iconEl = document.createElement("span");
+            iconEl.className = "chat-preview-icon";
+            let icon = "📄";
+            if (file.type.startsWith("video/") || ["mp4", "webm", "ogg", "mov"].includes(ext)) icon = "🎥";
+            else if (file.type.startsWith("audio/") || ["mp3", "wav", "m4a"].includes(ext)) icon = "🎵";
+            else if (ext === "pdf") icon = "📕";
+            else if (["doc", "docx"].includes(ext)) icon = "📘";
+            else if (["xls", "xlsx", "csv"].includes(ext)) icon = "📗";
+            else if (["zip", "rar"].includes(ext)) icon = "📦";
+            
+            iconEl.textContent = icon;
+            card.appendChild(iconEl);
+
+            const nameEl = document.createElement("span");
+            nameEl.className = "chat-preview-name";
+            nameEl.textContent = file.name;
+            card.appendChild(nameEl);
+        }
+
+        const removeBtn = document.createElement("button");
+        removeBtn.className = "chat-preview-remove";
+        removeBtn.innerHTML = "×";
+        removeBtn.addEventListener("click", () => {
+            attachedFiles.splice(index, 1);
+            renderFilePreviews();
+        });
+        card.appendChild(removeBtn);
+
+        chatFilePreviews.appendChild(card);
+    });
+}
+
+if (chatAttachBtn && chatFileInput) {
+    chatAttachBtn.addEventListener("click", () => {
+        chatFileInput.click();
+    });
+
+    chatFileInput.addEventListener("change", () => {
+        const newFiles = Array.from(chatFileInput.files);
+        if (newFiles.length > 0) {
+            attachedFiles = attachedFiles.concat(newFiles);
+            renderFilePreviews();
+        }
+        chatFileInput.value = ""; // Reset file input
+    });
 }
 
 function startNewChat(showWelcome = true) {

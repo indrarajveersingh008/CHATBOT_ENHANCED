@@ -21,6 +21,11 @@ class Conversation(Base):
         cascade="all, delete-orphan",
         order_by="Message.id",
     )
+    files = relationship(
+        "UploadedFile",
+        back_populates="conversation",
+        cascade="all, delete-orphan",
+    )
 
 
 class Message(Base):
@@ -35,6 +40,11 @@ class Message(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     conversation = relationship("Conversation", back_populates="messages")
+    files = relationship(
+        "UploadedFile",
+        back_populates="message",
+        cascade="all, delete-orphan",
+    )
 
 
 class UploadedFile(Base):
@@ -48,3 +58,9 @@ class UploadedFile(Base):
     content_type = Column(String(100), nullable=True)
     size = Column(Integer, default=0)
     uploaded_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    conversation_id = Column(Integer, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=True)
+    message_id = Column(Integer, ForeignKey("messages.id", ondelete="CASCADE"), nullable=True)
+
+    conversation = relationship("Conversation", back_populates="files")
+    message = relationship("Message", back_populates="files")

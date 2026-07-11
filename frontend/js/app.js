@@ -11,7 +11,7 @@ window.addEventListener("load", function () {
     chatBox.innerHTML = "";
 
     if (chatHistory.length > 0) {
-        chatHistory.forEach((msg) => addMessage(msg.text, msg.sender, false));
+        chatHistory.forEach((msg) => addMessage(msg.text, msg.sender, false, msg.files));
     } else {
         addMessage(
             "👋 Hello! I'm AI Nexus. How can I help you today?",

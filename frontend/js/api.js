@@ -28,14 +28,15 @@ async function handleResponse(response) {
 const Api = {
     /* ---------- Chat ---------- */
 
-    async sendMessage(message, conversationId, modelName) {
+    async sendMessage(message, conversationId, modelName, fileIds = null) {
         const response = await fetch(`${getApiBaseUrl()}/chat`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 message,
                 conversation_id: conversationId ?? null,
-                model_name: modelName ?? null
+                model_name: modelName ?? null,
+                file_ids: fileIds ?? null
             })
         });
         return handleResponse(response);

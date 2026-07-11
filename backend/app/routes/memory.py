@@ -32,6 +32,15 @@ def get_conversation(conversation_id: int, db: Session = Depends(get_db)):
                 "sender": m.sender,
                 "content": m.content,
                 "created_at": m.created_at.isoformat(),
+                "files": [
+                    {
+                        "id": f.id,
+                        "filename": f.filename,
+                        "content_type": f.content_type,
+                        "size": f.size,
+                    }
+                    for f in m.files
+                ],
             }
             for m in conversation.messages
         ],
@@ -43,6 +52,18 @@ def delete_conversation(conversation_id: int, db: Session = Depends(get_db)):
     conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
     if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")
+
+    # Delete physical files associated with the conversation from disk
+    import os
+    from ..config.settings import settings
+    for f_record in conversation.files:
+        file_path = os.path.join(settings.UPLOAD_DIR, f_record.stored_name)
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except Exception as e:
+                print(f"Error deleting physical file {file_path} for conversation {conversation_id}: {e}")
+
     db.delete(conversation)
     db.commit()
     return {"status": "deleted"}
