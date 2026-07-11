@@ -1,0 +1,50 @@
+/* ======================================
+   AI NEXUS — RESPONSIVE
+====================================== */
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 90px;
+        padding: 15px 8px;
+    }
+
+    .sidebar .logo h2,
+    .sidebar .logo p,
+    .profile span {
+        display: none;
+    }
+
+    .menu-btn {
+        font-size: 13px;
+        padding: 10px 4px;
+        text-align: center;
+    }
+
+    .topbar h1 {
+        font-size: 22px;
+    }
+
+    .topbar p {
+        display: none;
+    }
+
+    .panel-header {
+        padding: 18px 16px 8px;
+        flex-wrap: wrap;
+    }
+
+    .item-list,
+    .search-bar,
+    .settings-list {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .chat-box {
+        padding: 16px;
+    }
+
+    .input-area {
+        padding: 14px;
+    }
+}

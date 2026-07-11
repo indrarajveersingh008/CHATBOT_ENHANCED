@@ -1,0 +1,298 @@
+/* ======================================
+   AI NEXUS — SIDEBAR & PANELS
+   Retro Macintosh System dialogs and controls.
+====================================== */
+
+.panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.panel.hidden {
+    display: none;
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 25px 30px 10px;
+    gap: 15px;
+}
+
+.panel-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #22201e;
+}
+
+.panel-action-btn {
+    background: #fbfaf7;
+    color: #22201e;
+    border: 2px solid #22201e;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 2px 2px 0px #22201e;
+    transition: .15s;
+}
+
+.panel-action-btn:hover {
+    background: #e6e3df;
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0px #22201e;
+}
+
+.panel-action-btn:active {
+    transform: translate(1px, 1px);
+    box-shadow: none;
+}
+
+.item-list {
+    list-style: none;
+    padding: 10px 30px 30px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.memory-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #fbfaf7;
+    padding: 14px 18px;
+    border: 2px solid #22201e;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 3px 3px 0px #22201e;
+    transition: .15s;
+}
+
+.memory-item:hover {
+    background: #e6e3df;
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0px #22201e;
+}
+
+.memory-item.active {
+    background: #22201e;
+    color: #fbfaf7;
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0px #22201e;
+}
+
+.memory-item.active .memory-title {
+    color: #fbfaf7;
+}
+
+.memory-item.active .memory-date {
+    color: #b8b4af;
+}
+
+.memory-item.active .memory-delete,
+.memory-item.active .memory-download {
+    color: #b8b4af;
+}
+
+.memory-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+    font-weight: 600;
+    color: #22201e;
+}
+
+.memory-date {
+    color: #4a4744;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.memory-delete,
+.memory-download {
+    background: transparent;
+    border: none;
+    color: #4a4744;
+    cursor: pointer;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.memory-delete:hover {
+    color: #ef4444 !important;
+}
+
+.memory-download:hover {
+    color: #c2410c !important;
+}
+
+.memory-empty {
+    color: #22201e;
+    padding: 14px 18px;
+    list-style: none;
+    font-weight: 600;
+    background: #fbfaf7;
+    border: 2px solid #22201e;
+    border-radius: 8px;
+    box-shadow: 3px 3px 0px #22201e;
+    text-align: center;
+}
+
+.search-bar {
+    display: flex;
+    gap: 12px;
+    padding: 0 30px 15px;
+}
+
+.search-bar input {
+    flex: 1;
+    padding: 14px 18px;
+    border-radius: 8px;
+    border: 2px solid #22201e;
+    background: #fbfaf7;
+    color: #22201e;
+    font-size: 15px;
+    outline: none;
+    box-shadow: inset 1px 1px 0 rgba(0,0,0,0.05);
+}
+
+.search-bar button {
+    background: #fbfaf7;
+    color: #22201e;
+    border: 2px solid #22201e;
+    padding: 0 22px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 2px 2px 0px #22201e;
+    transition: .15s;
+}
+
+.search-bar button:hover {
+    background: #e6e3df;
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0px #22201e;
+}
+
+.settings-list {
+    padding: 10px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fbfaf7;
+    padding: 16px 20px;
+    border: 2px solid #22201e;
+    border-radius: 8px;
+    box-shadow: 3px 3px 0px #22201e;
+    color: #22201e;
+    font-weight: 600;
+}
+
+.settings-row code {
+    color: #c2410c;
+    font-size: 13px;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    background: #e6e3df;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Custom Toggle Switches */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #fbfaf7;
+    border: 2px solid #22201e;
+    transition: .15s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: #22201e;
+    transition: .15s;
+    border-radius: 50%;
+}
+
+.switch input:checked + .slider {
+    background-color: #22201e;
+}
+
+.switch input:checked + .slider:before {
+    transform: translateX(24px);
+    background-color: #fbfaf7;
+}
+
+/* Custom Dropdown Select */
+.settings-select {
+    background-color: #fbfaf7;
+    color: #22201e;
+    border: 2px solid #22201e;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+    transition: .15s;
+    font-family: inherit;
+    box-shadow: 2px 2px 0px #22201e;
+}
+
+.settings-select:focus {
+    background-color: #e6e3df;
+}
+
+#clearBtn {
+    width: 50px;
+    border: 2px solid #22201e;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    background: #fbfaf7;
+    color: white;
+    transition: .15s;
+    box-shadow: 2px 2px 0px #22201e;
+}
+
+#clearBtn:hover {
+    background: #e6e3df;
+    transform: scale(1.05);
+}

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI Nexus</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/chat.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/responsive.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="icon" href="assets/logo/favicon.png">
+</head>
+
+<body>
+
+    <div class="app">
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+
+            <div class="logo">
+                <div class="logo-circle">🤖</div>
+
+                <h2>AI Nexus</h2>
+
+                <p>Powered by AI</p>
+            </div>
+
+            <nav>
+
+                <button class="menu-btn active" data-panel="chat">
+                    💬 Chat
+                </button>
+
+                <button class="menu-btn" data-panel="memory">
+                    🧠 Memory
+                </button>
+
+                <button class="menu-btn" data-panel="files">
+                    📂 Files
+                </button>
+
+                <button class="menu-btn" data-panel="search">
+                    🌐 Search
+                </button>
+
+                <button class="menu-btn" data-panel="settings">
+                    ⚙️ Settings
+                </button>
+
+            </nav>
+
+            <div class="profile">
+
+                👤 Rajveer
+
+            </div>
+
+        </aside>
+
+        <!-- Main -->
+
+        <main class="main">
+
+            <header class="topbar">
+
+                <div>
+
+                    <h1>AI Nexus 2.0</h1>
+
+                    <p>Your Intelligent AI Assistant</p>
+
+                </div>
+
+            </header>
+
+            <!-- Chat panel -->
+            <section id="panel-chat" class="panel">
+
+                <section id="chat-box" class="chat-box"></section>
+
+                <footer class="input-area">
+
+                    <button id="clearBtn" title="New chat">🆕</button>
+
+                    <button id="voiceBtn" title="Voice input">🎤</button>
+
+                    <input id="message" type="text" placeholder="Ask AI Nexus anything..." autocomplete="off">
+
+                    <button id="sendBtn" title="Send">➤</button>
+
+                </footer>
+
+            </section>
+
+            <!-- Memory panel -->
+            <section id="panel-memory" class="panel hidden">
+                <div class="panel-header">
+                    <h2>🧠 Memory</h2>
+                    <button id="newChatFromMemory" class="panel-action-btn">🆕 New Chat</button>
+                </div>
+                <ul id="memoryList" class="item-list"></ul>
+            </section>
+
+            <!-- Files panel -->
+            <section id="panel-files" class="panel hidden">
+                <div class="panel-header">
+                    <h2>📂 Files</h2>
+                    <button id="fileUploadBtn" class="panel-action-btn">⬆️ Upload</button>
+                    <input id="fileInput" type="file" hidden>
+                </div>
+                <ul id="filesList" class="item-list"></ul>
+            </section>
+
+            <!-- Search panel -->
+            <section id="panel-search" class="panel hidden">
+                <div class="panel-header">
+                    <h2>🌐 Search</h2>
+                </div>
+                <div class="search-bar">
+                    <input id="searchInput" type="text" placeholder="Search your conversations..." autocomplete="off">
+                    <button id="searchBtn">Search</button>
+                </div>
+                <ul id="searchResults" class="item-list"></ul>
+            </section>
+
+            <!-- Settings panel -->
+            <section id="panel-settings" class="panel hidden">
+                <div class="panel-header">
+                    <h2>⚙️ Settings</h2>
+                </div>
+                <div class="settings-list">
+                    <div class="settings-row">
+                        <span>Backend URL</span>
+                        <code id="backendUrlDisplay"></code>
+                    </div>
+                    <div class="settings-row">
+                        <span>Smart Awake ("Hi Nexus")</span>
+                        <label class="switch">
+                            <input type="checkbox" id="smartAwakeToggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-row">
+                        <span>Voice Responses (TTS)</span>
+                        <label class="switch">
+                            <input type="checkbox" id="voiceResponseToggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-row">
+                        <span>AI Model</span>
+                        <select id="modelSelect" class="settings-select">
+                            <option value="deepseek/deepseek-chat-v3-0324">DeepSeek V3 (Default)</option>
+                            <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
+                            <option value="meta-llama/llama-3.3-70b-instruct">Llama 3.3 70B</option>
+                            <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
+                        </select>
+                    </div>
+                    <div class="settings-row">
+                        <span>Local chat cache</span>
+                        <button id="clearLocalCacheBtn" class="panel-action-btn">Clear Cache</button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+
+    <script src="js/api.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/memory.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/voice.js"></script>
+    <script src="js/app.js"></script>
+
+    <footer style="
+text-align:center;
+padding:8px;
+color:#94a3b8;
+font-size:13px;
+">
+
+        Made with ❤️ by Rajveer Singh • AI Nexus 2.0
+
+    </footer>
+</body>
+
+</html>
