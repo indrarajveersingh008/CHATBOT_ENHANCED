@@ -89,7 +89,7 @@ function addMessage(text, sender, save = true, files = null, id = null) {
     }
     message.dataset.rawText = text;
 
-    const avatar = sender === "bot" ? "🤖" : "👤";
+    const avatar = sender === "bot" ? "⚙️" : "👤";
 
     let attachmentsHtml = "";
     if (files && files.length > 0) {
@@ -97,10 +97,10 @@ function addMessage(text, sender, save = true, files = null, id = null) {
         files.forEach((f) => {
             const ext = f.filename.split('.').pop().toLowerCase();
             const downloadUrl = Api.fileDownloadUrl(f.id);
-            
+
             const isImage = f.content_type?.startsWith("image/") || ["jpg", "jpeg", "png", "webp", "gif"].includes(ext);
             const isVideo = f.content_type?.startsWith("video/") || ["mp4", "webm", "ogg", "mov"].includes(ext);
-            
+
             if (isImage) {
                 attachmentsHtml += `
                     <a href="${downloadUrl}" target="_blank" class="attachment-item image-attachment">
@@ -120,7 +120,7 @@ function addMessage(text, sender, save = true, files = null, id = null) {
                 else if (["xls", "xlsx", "csv"].includes(ext)) icon = "📗";
                 else if (["zip", "rar", "tar", "gz"].includes(ext)) icon = "📦";
                 else if (["mp3", "wav", "ogg", "m4a"].includes(ext)) icon = "🎵";
-                
+
                 attachmentsHtml += `
                     <a href="${downloadUrl}" target="_blank" class="attachment-item">
                         <span class="attachment-icon">${icon}</span>
@@ -206,7 +206,7 @@ function showTyping() {
     typing.className = "message bot";
     typing.id = "typing";
     typing.innerHTML = `
-        <div class="avatar">🤖</div>
+        <div class="avatar">⚙️</div>
         <div class="bubble typing-bubble">
             <div class="dot"></div>
             <div class="dot"></div>
@@ -303,7 +303,7 @@ async function sendMessage() {
         }
 
         addMessage(data.reply, "bot", true, null, data.bot_message_id);
-        
+
         if (typeof Voice !== "undefined") {
             Voice.speak(data.reply);
         }
@@ -354,7 +354,7 @@ function renderFilePreviews() {
             else if (["doc", "docx"].includes(ext)) icon = "📘";
             else if (["xls", "xlsx", "csv"].includes(ext)) icon = "📗";
             else if (["zip", "rar"].includes(ext)) icon = "📦";
-            
+
             iconEl.textContent = icon;
             card.appendChild(iconEl);
 
