@@ -184,6 +184,13 @@ const Settings = {
                 } else {
                     localStorage.removeItem("customBackendUrl");
                 }
+                // Instantly refresh the panels using the new backend URL
+                if (typeof Memory !== "undefined" && typeof Memory.refreshList === "function") {
+                    Memory.refreshList();
+                }
+                if (typeof Files !== "undefined" && typeof Files.refreshList === "function") {
+                    Files.refreshList();
+                }
             });
         }
 

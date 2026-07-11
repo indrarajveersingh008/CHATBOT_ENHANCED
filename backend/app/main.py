@@ -16,10 +16,14 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="AI Nexus", lifespan=lifespan)
 
+# FastAPI CORSMiddleware does not allow wildcard "*" origins if allow_credentials is True.
+# If "*" is in the origins list, we must set allow_credentials to False to avoid a startup crash.
+allow_all_origins = "*" in settings.CORS_ORIGINS
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
+    allow_credentials=not allow_all_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
