@@ -72,7 +72,7 @@ const Memory = {
             AppState.currentConversationId = conversation.id;
             chatBox.innerHTML = "";
 
-            conversation.messages.forEach((m) => addMessage(m.content, m.sender, false, m.files));
+            conversation.messages.forEach((m) => addMessage(m.content, m.sender, true, m.files, m.id));
 
             UI.showPanel("chat");
             this.refreshList();
