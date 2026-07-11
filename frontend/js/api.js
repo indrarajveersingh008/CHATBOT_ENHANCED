@@ -42,6 +42,19 @@ const Api = {
         return handleResponse(response);
     },
 
+    async editOrRetryMessage(messageId, message, modelName) {
+        const response = await fetch(`${getApiBaseUrl()}/chat/edit`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                message_id: messageId,
+                message,
+                model_name: modelName ?? null
+            })
+        });
+        return handleResponse(response);
+    },
+
     /* ---------- Memory (conversation history) ---------- */
 
     async listConversations() {

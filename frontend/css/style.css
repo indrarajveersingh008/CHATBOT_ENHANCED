@@ -172,42 +172,55 @@ nav {
 }
 
 .message.user .message-footer {
-    justify-content: flex-end;
+    flex-direction: row-reverse;
     color: #4a4744;
 }
 
-.copy-btn {
-    background: #ffffff;
-    border: 2px solid #22201e;
-    color: #22201e;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
+.message-actions {
     display: flex;
+    gap: 8px;
     align-items: center;
-    gap: 4px;
-    transition: .15s;
-    box-shadow: 2px 2px 0px #22201e;
-    outline: none;
 }
 
-.copy-btn:hover {
+.action-btn {
+    background: #fbfaf7;
+    border: 2px solid #22201e;
+    color: #22201e;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    box-shadow: 2px 2px 0px #22201e;
+    outline: none;
+    padding: 0;
+}
+
+.action-btn:hover {
     background: #e6e3df;
     transform: translate(-1px, -1px);
     box-shadow: 3px 3px 0px #22201e;
 }
 
-.copy-btn:active {
+.action-btn:active {
     transform: translate(1px, 1px);
     box-shadow: none;
 }
 
-.copy-btn.copied {
-    background: #c2410c;
-    border-color: #22201e;
-    color: white;
+.action-btn.copied {
+    background: #22201e;
+    color: #fbfaf7;
+}
+
+.action-btn svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    stroke-width: 2.5px;
+    fill: none;
 }
 
 @keyframes fade {
@@ -377,4 +390,71 @@ nav {
     border: 3px solid #22201e;
     box-shadow: 3px 3px 0px #22201e;
     margin-top: 12px;
+}
+
+/* Inline Edit Interface */
+.edit-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    min-width: 280px;
+}
+
+.edit-textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px;
+    border: 2px solid #22201e;
+    border-radius: 6px;
+    background: #fbfaf7;
+    color: #22201e;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+    outline: none;
+}
+
+.edit-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.save-edit-btn, .cancel-edit-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 2px solid #22201e;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 2px 2px 0px #22201e;
+    transition: all 0.15s;
+}
+
+.save-edit-btn {
+    background: #22201e;
+    color: #fbfaf7;
+}
+
+.save-edit-btn:hover {
+    background: #333333;
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0px #22201e;
+}
+
+.cancel-edit-btn {
+    background: #fbfaf7;
+    color: #22201e;
+}
+
+.cancel-edit-btn:hover {
+    background: #e6e3df;
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0px #22201e;
+}
+
+.save-edit-btn:active, .cancel-edit-btn:active {
+    transform: translate(1px, 1px);
+    box-shadow: none;
 }

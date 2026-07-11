@@ -29,6 +29,7 @@ def get_conversation(conversation_id: int, db: Session = Depends(get_db)):
         "title": conversation.title,
         "messages": [
             {
+                "id": m.id,
                 "sender": m.sender,
                 "content": m.content,
                 "created_at": m.created_at.isoformat(),

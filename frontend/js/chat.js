@@ -76,9 +76,18 @@ function scrollBottom() {
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-function addMessage(text, sender, save = true, files = null) {
+const SVG_COPY = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+const SVG_CHECK = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+const SVG_REGEN = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>`;
+const SVG_EDIT = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4z"></path></svg>`;
+
+function addMessage(text, sender, save = true, files = null, id = null) {
     const message = document.createElement("div");
     message.className = `message ${sender}`;
+    if (id) {
+        message.dataset.id = id;
+    }
+    message.dataset.rawText = text;
 
     const avatar = sender === "bot" ? "🤖" : "👤";
 
@@ -123,6 +132,24 @@ function addMessage(text, sender, save = true, files = null) {
         attachmentsHtml += `</div>`;
     }
 
+    let actionsHtml = "";
+    if (sender === "bot") {
+        // Only show regenerate if there is a preceding user message
+        const showRegen = id !== null || (chatBox.children.length > 0 && chatBox.lastElementChild.classList.contains("user"));
+        actionsHtml = `
+            <div class="message-actions">
+                <button class="action-btn copy-btn" title="Copy Message">${SVG_COPY}</button>
+                ${showRegen ? `<button class="action-btn regenerate-btn" title="Regenerate Response">${SVG_REGEN}</button>` : ""}
+            </div>
+        `;
+    } else if (sender === "user") {
+        actionsHtml = `
+            <div class="message-actions">
+                <button class="action-btn edit-btn" title="Edit Message">${SVG_EDIT}</button>
+            </div>
+        `;
+    }
+
     message.innerHTML = `
         <div class="avatar">${avatar}</div>
         <div class="content">
@@ -132,7 +159,7 @@ function addMessage(text, sender, save = true, files = null) {
             </div>
             <div class="message-footer">
                 <div class="time">${currentTime()}</div>
-                ${sender === "bot" ? `<button class="copy-btn"><span>📋</span><span>Copy</span></button>` : ""}
+                ${actionsHtml}
             </div>
         </div>
     `;
@@ -146,21 +173,30 @@ function addMessage(text, sender, save = true, files = null) {
     const copyBtn = message.querySelector(".copy-btn");
     if (copyBtn) {
         copyBtn.addEventListener("click", () => {
-            const code = message.querySelector("pre code");
-            navigator.clipboard.writeText(code ? code.innerText : text);
-            copyBtn.innerHTML = "<span>✅</span><span>Copied</span>";
+            navigator.clipboard.writeText(message.dataset.rawText || text);
+            copyBtn.innerHTML = SVG_CHECK;
             copyBtn.classList.add("copied");
             setTimeout(() => {
-                copyBtn.innerHTML = "<span>📋</span><span>Copy</span>";
+                copyBtn.innerHTML = SVG_COPY;
                 copyBtn.classList.remove("copied");
             }, 2000);
         });
     }
 
+    const editBtn = message.querySelector(".edit-btn");
+    if (editBtn) {
+        editBtn.addEventListener("click", () => enterEditMode(message));
+    }
+
+    const regenBtn = message.querySelector(".regenerate-btn");
+    if (regenBtn) {
+        regenBtn.addEventListener("click", () => retryResponse(message));
+    }
+
     scrollBottom();
 
     if (save) {
-        chatHistory.push({ sender, text, files });
+        chatHistory.push({ sender, text, files, id });
         saveHistory();
     }
 }
@@ -248,7 +284,25 @@ async function sendMessage() {
             }
         }
 
-        addMessage(data.reply, "bot");
+        // Apply message IDs to user message in DOM and state
+        if (data.user_message_id) {
+            const userMessages = chatBox.querySelectorAll(".message.user");
+            if (userMessages.length > 0) {
+                const lastUserMsg = userMessages[userMessages.length - 1];
+                lastUserMsg.dataset.id = data.user_message_id;
+            }
+            if (chatHistory.length > 0) {
+                for (let i = chatHistory.length - 1; i >= 0; i--) {
+                    if (chatHistory[i].sender === "user") {
+                        chatHistory[i].id = data.user_message_id;
+                        break;
+                    }
+                }
+                saveHistory();
+            }
+        }
+
+        addMessage(data.reply, "bot", true, null, data.bot_message_id);
         
         if (typeof Voice !== "undefined") {
             Voice.speak(data.reply);
@@ -354,6 +408,180 @@ function startNewChat(showWelcome = true) {
     }
 
     messageInput.focus();
+}
+
+function enterEditMode(messageEl) {
+    cancelAllEdits();
+    const bubble = messageEl.querySelector(".bubble");
+    if (!bubble) return;
+    const rawText = messageEl.dataset.rawText || "";
+    messageEl.dataset.originalBubbleHtml = bubble.innerHTML;
+    bubble.innerHTML = `
+        <div class="edit-container">
+            <textarea class="edit-textarea">${escapeHtml(rawText)}</textarea>
+            <div class="edit-buttons">
+                <button class="save-edit-btn">Save & Submit</button>
+                <button class="cancel-edit-btn">Cancel</button>
+            </div>
+        </div>
+    `;
+    const textarea = bubble.querySelector(".edit-textarea");
+    textarea.focus();
+    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    bubble.querySelector(".cancel-edit-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        cancelEdit(messageEl);
+    });
+    bubble.querySelector(".save-edit-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        const newText = textarea.value.trim();
+        if (newText === "") return;
+        submitEdit(messageEl, newText);
+    });
+}
+
+function cancelEdit(messageEl) {
+    const bubble = messageEl.querySelector(".bubble");
+    if (bubble && messageEl.dataset.originalBubbleHtml) {
+        bubble.innerHTML = messageEl.dataset.originalBubbleHtml;
+        delete messageEl.dataset.originalBubbleHtml;
+    }
+}
+
+function cancelAllEdits() {
+    document.querySelectorAll(".message.user").forEach((msgEl) => {
+        if (msgEl.dataset.originalBubbleHtml) {
+            cancelEdit(msgEl);
+        }
+    });
+}
+
+async function submitEdit(messageEl, newText) {
+    const messageId = messageEl.dataset.id;
+    if (!messageId) {
+        messageInput.value = newText;
+        removeMessagesFromDOMAndHistory(messageEl);
+        messageInput.focus();
+        return;
+    }
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = "⏳";
+    if (chatAttachBtn) chatAttachBtn.disabled = true;
+    removeMessagesFromDOMAfter(messageEl);
+    showTyping();
+    try {
+        const selectedModel = localStorage.getItem("selectedModel") || "deepseek/deepseek-chat-v3-0324";
+        const data = await Api.editOrRetryMessage(parseInt(messageId), newText, selectedModel);
+        hideTyping();
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = "➤";
+        if (chatAttachBtn) chatAttachBtn.disabled = false;
+        if (!data.reply) {
+            throw new Error("No 'reply' received from backend.");
+        }
+        messageEl.dataset.rawText = newText;
+        const bubble = messageEl.querySelector(".bubble");
+        if (bubble) {
+            bubble.innerHTML = formatMessage(newText);
+        }
+        delete messageEl.dataset.originalBubbleHtml;
+        const msgIndex = chatHistory.findIndex(m => m.id && String(m.id) === String(messageId));
+        if (msgIndex !== -1) {
+            chatHistory = chatHistory.slice(0, msgIndex + 1);
+            chatHistory[msgIndex].text = newText;
+        } else {
+            chatHistory = [{ sender: "user", text: newText, id: parseInt(messageId) }];
+        }
+        saveHistory();
+        addMessage(data.reply, "bot", true, null, data.bot_message_id);
+        if (typeof Voice !== "undefined") {
+            Voice.speak(data.reply);
+        }
+        if (typeof Memory !== "undefined") {
+            Memory.refreshList();
+        }
+    } catch (error) {
+        hideTyping();
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = "➤";
+        if (chatAttachBtn) chatAttachBtn.disabled = false;
+        alert(`Edit failed: ${error.message}`);
+        cancelEdit(messageEl);
+    }
+}
+
+function removeMessagesFromDOMAfter(messageEl) {
+    let next = messageEl.nextElementSibling;
+    while (next) {
+        const toRemove = next;
+        next = next.nextElementSibling;
+        if (toRemove.id !== "typing") {
+            toRemove.remove();
+        }
+    }
+}
+
+function removeMessagesFromDOMAndHistory(messageEl) {
+    const index = chatHistory.findIndex(m => m.text === messageEl.dataset.rawText && m.sender === "user");
+    if (index !== -1) {
+        chatHistory = chatHistory.slice(0, index);
+        saveHistory();
+    }
+    let next = messageEl.nextElementSibling;
+    while (next) {
+        const toRemove = next;
+        next = next.nextElementSibling;
+        toRemove.remove();
+    }
+    messageEl.remove();
+}
+
+async function retryResponse(botMessageEl) {
+    const userMessageEl = botMessageEl.previousElementSibling;
+    if (!userMessageEl || !userMessageEl.classList.contains("user")) {
+        alert("Could not find preceding user message to retry.");
+        return;
+    }
+    const messageId = userMessageEl.dataset.id;
+    if (!messageId) {
+        messageInput.value = userMessageEl.dataset.rawText || "";
+        removeMessagesFromDOMAndHistory(userMessageEl);
+        sendMessage();
+        return;
+    }
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = "⏳";
+    if (chatAttachBtn) chatAttachBtn.disabled = true;
+    removeMessagesFromDOMAfter(userMessageEl);
+    showTyping();
+    try {
+        const selectedModel = localStorage.getItem("selectedModel") || "deepseek/deepseek-chat-v3-0324";
+        const data = await Api.editOrRetryMessage(parseInt(messageId), userMessageEl.dataset.rawText, selectedModel);
+        hideTyping();
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = "➤";
+        if (chatAttachBtn) chatAttachBtn.disabled = false;
+        if (!data.reply) {
+            throw new Error("No 'reply' received from backend.");
+        }
+        const msgIndex = chatHistory.findIndex(m => m.id && String(m.id) === String(messageId));
+        if (msgIndex !== -1) {
+            chatHistory = chatHistory.slice(0, msgIndex + 1);
+        } else {
+            chatHistory = [{ sender: "user", text: userMessageEl.dataset.rawText, id: parseInt(messageId) }];
+        }
+        saveHistory();
+        addMessage(data.reply, "bot", true, null, data.bot_message_id);
+        if (typeof Voice !== "undefined") {
+            Voice.speak(data.reply);
+        }
+    } catch (error) {
+        hideTyping();
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = "➤";
+        if (chatAttachBtn) chatAttachBtn.disabled = false;
+        alert(`Regeneration failed: ${error.message}`);
+    }
 }
 
 sendBtn.addEventListener("click", sendMessage);
