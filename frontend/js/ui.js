@@ -168,13 +168,24 @@ const Search = {
 
 const Settings = {
     init() {
-        const urlEl = document.getElementById("backendUrlDisplay");
-        if (urlEl) urlEl.textContent = API_BASE_URL;
-
         // Elements
+        const backendUrlInput = document.getElementById("backendUrlInput");
         const smartAwakeToggle = document.getElementById("smartAwakeToggle");
         const voiceResponseToggle = document.getElementById("voiceResponseToggle");
         const modelSelect = document.getElementById("modelSelect");
+
+        // Load current URL
+        if (backendUrlInput) {
+            backendUrlInput.value = getApiBaseUrl();
+            backendUrlInput.addEventListener("change", (e) => {
+                const val = e.target.value.trim();
+                if (val) {
+                    localStorage.setItem("customBackendUrl", val);
+                } else {
+                    localStorage.removeItem("customBackendUrl");
+                }
+            });
+        }
 
         // Set initial values
         if (smartAwakeToggle) {
