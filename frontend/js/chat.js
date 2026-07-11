@@ -89,7 +89,7 @@ function addMessage(text, sender, save = true, files = null, id = null) {
     }
     message.dataset.rawText = text;
 
-    const avatar = sender === "bot" ? "⚙️" : "👤";
+    const avatar = sender === "bot" ? "⚙️" : "👨‍💻";
 
     let attachmentsHtml = "";
     if (files && files.length > 0) {
