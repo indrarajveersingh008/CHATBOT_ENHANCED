@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from ..database.db import get_db
 from ..models.models import UploadedFile
-from ..utils.helpers import safe_filename
+from ..utils.helpers import safe_filename, normalize_content_type
 from ..config.settings import settings
 
 router = APIRouter(prefix="/files", tags=["files"])
@@ -33,7 +33,7 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
     record = UploadedFile(
         filename=file.filename or stored_name,
         stored_name=stored_name,
-        content_type=file.content_type,
+        content_type=normalize_content_type(file.filename, file.content_type),
         size=len(contents),
     )
     db.add(record)
