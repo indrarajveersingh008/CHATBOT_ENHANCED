@@ -19,6 +19,7 @@
 @media (max-width: 768px) {
     .app {
         flex-direction: column;
+        min-height: 100vh;
     }
 
     .sidebar {
@@ -72,19 +73,57 @@
 
     .input-area {
         padding: 12px;
-        gap: 8px;
-        align-items: flex-end;
+        gap: 10px;
+        align-items: center;
     }
 
     .input-area button {
-        width: 48px;
-        height: 48px;
+        width: 50px;
+        min-width: 50px;
+        height: 50px;
         font-size: 18px;
     }
 
     .input-area textarea {
-        min-height: 48px;
+        min-height: 50px;
         font-size: 15px;
+    }
+
+    #panel-chat {
+        min-height: calc(100vh - 132px);
+    }
+}
+
+@media (max-width: 480px) {
+    .topbar {
+        height: auto;
+        padding: 14px 16px;
+    }
+
+    .chat-box {
+        padding: 12px;
+        gap: 16px;
+    }
+
+    .message {
+        max-width: 95%;
+    }
+
+    .input-area {
+        padding: 10px;
+        gap: 8px;
+    }
+
+    .input-area button {
+        width: 46px;
+        min-width: 46px;
+        height: 46px;
+        font-size: 17px;
+    }
+
+    .input-area textarea {
+        min-height: 46px;
+        font-size: 14px;
     }
 }
 
