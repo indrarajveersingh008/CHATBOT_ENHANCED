@@ -180,7 +180,6 @@ async function sendMessage() {
     sendBtn.disabled = true;
     sendBtn.innerHTML = "⏳";
     if (chatAttachBtn) chatAttachBtn.disabled = true;
-    showTyping();
 
     const fileIds = [];
     const uploadedFilesMeta = [];
@@ -199,7 +198,6 @@ async function sendMessage() {
                 sendBtn.disabled = false;
                 sendBtn.innerHTML = "➤";
                 if (chatAttachBtn) chatAttachBtn.disabled = false;
-                hideTyping();
                 return;
             }
         }
@@ -208,6 +206,7 @@ async function sendMessage() {
     addMessage(text, "user", true, uploadedFilesMeta);
     messageInput.value = "";
     messageInput.focus();
+    showTyping();
 
     try {
         const selectedModel = localStorage.getItem("selectedModel") || "deepseek/deepseek-chat-v3-0324";
