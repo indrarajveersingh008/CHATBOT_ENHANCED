@@ -5,26 +5,19 @@
     font-family: 'Geneva', 'Chicago', 'Courier New', system-ui, -apple-system, sans-serif;
 }
 
-html,
-body {
-    margin: 0;
-    padding: 0;
-    min-height: 100%;
-    height: 100%;
-}
-
 body {
     background: #8c8985;
     color: #22201e;
-    min-height: 100vh;
+    height: 100vh;
     overflow: hidden;
 }
 
 .app {
     display: flex;
+    height: 100vh;
     min-height: 100vh;
-    min-width: 100%;
-    width: 100%;
+    width: 100vw;
+    max-width: 100%;
     overflow: hidden;
 }
 
@@ -124,31 +117,6 @@ nav {
     background: #8c8985;
     background-image: radial-gradient(#22201e 8%, transparent 9%);
     background-size: 16px 16px;
-}
-
-.panel {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
-}
-
-#panel-chat {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
-}
-
-.chat-box {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    padding: 30px;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-    width: 100%;
 }
 
 .topbar {
@@ -315,7 +283,6 @@ nav {
 .input-area {
     padding: 20px 24px;
     display: flex;
-    flex-wrap: wrap;
     gap: 12px;
     align-items: flex-end;
     background: #b8b4af;
@@ -348,18 +315,15 @@ nav {
 }
 
 .input-area button {
-    width: 56px;
-    min-width: 56px;
-    height: 56px;
+    width: 60px;
     border: 3px solid #22201e;
-    border-radius: 12px;
-    font-size: 20px;
+    border-radius: 8px;
+    font-size: 22px;
     cursor: pointer;
     background: #fbfaf7;
     color: #22201e;
-    transition: .15s ease, transform .15s ease;
+    transition: .15s;
     box-shadow: 3px 3px 0px #22201e;
-    flex: 0 0 auto;
 }
 
 .input-area button:hover {
