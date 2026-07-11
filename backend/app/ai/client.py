@@ -89,3 +89,36 @@ def ask_ai(
         raise ValueError("AI returned an empty message.")
 
     return choice_message.content
+
+
+def generate_conversation_title(first_message: str, model_name: str | None = None) -> str:
+    """
+    Generate a 3-5 word title for a conversation based on the user's first message.
+    """
+    chosen_model = model_name or settings.MODEL_NAME
+    prompt = (
+        f"Create a short, descriptive title (maximum 5 words, no quotes, no conversational filler, no trailing punctuation) "
+        f"summarizing this message:\n\n{first_message}"
+    )
+    messages = [
+        {"role": "system", "content": "You are a title generator. Return only the raw title text without punctuation or quotes."},
+        {"role": "user", "content": prompt}
+    ]
+    try:
+        completion = client.chat.completions.create(
+            model=chosen_model,
+            messages=messages,
+            max_tokens=20,
+            temperature=0.5,
+        )
+        if completion.choices and completion.choices[0].message.content:
+            title = completion.choices[0].message.content.strip().strip('"').strip("'").strip(".")
+            return title[:60]
+    except Exception as e:
+        print(f"Error generating chat title: {e}")
+    
+    # Fallback to truncation
+    fallback = first_message.strip()[:40]
+    if len(first_message.strip()) > 40:
+        fallback += "..."
+    return fallback or "New Chat"

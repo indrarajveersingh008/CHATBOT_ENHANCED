@@ -17,7 +17,17 @@ let attachedFiles = [];
 
 // Shared app-wide state other modules (memory.js, ui.js) also read/write.
 const AppState = {
-    currentConversationId: null
+    _currentConversationId: localStorage.getItem("currentConversationId") || null,
+    get currentConversationId() {
+        if (this._currentConversationId === "null" || this._currentConversationId === "undefined" || !this._currentConversationId) {
+            return null;
+        }
+        return parseInt(this._currentConversationId);
+    },
+    set currentConversationId(val) {
+        this._currentConversationId = val;
+        localStorage.setItem("currentConversationId", val);
+    }
 };
 
 let chatHistory = JSON.parse(localStorage.getItem("chatHistory")) || [];

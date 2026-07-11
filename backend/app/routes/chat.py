@@ -10,7 +10,7 @@ from ..database.db import get_db
 from ..models.models import Conversation, Message, UploadedFile
 from ..config.settings import settings
 from ..utils.file_reader import read_file_content
-from ..ai.client import ask_ai
+from ..ai.client import ask_ai, generate_conversation_title
 
 router = APIRouter(tags=["chat"])
 
@@ -33,11 +33,11 @@ def chat(request: ChatRequest, db: Session = Depends(get_db)):
                 .first()
             )
 
+        requested_model = request.model_name or settings.MODEL_NAME
+
         # No conversation yet (first message, or bad id) -> start a new one.
         if conversation is None:
-            title = request.message.strip()[:40] or "New Chat"
-            if len(request.message.strip()) > 40:
-                title += "..."
+            title = generate_conversation_title(request.message, requested_model)
             conversation = Conversation(title=title)
             db.add(conversation)
             db.commit()
@@ -111,7 +111,6 @@ def chat(request: ChatRequest, db: Session = Depends(get_db)):
                     except Exception as e:
                         print(f"Error encoding image {img_file.filename}: {e}")
 
-        requested_model = request.model_name or settings.MODEL_NAME
         reply = ask_ai(request.message, history, files_context, requested_model, attached_images=attached_images)
 
         db.add(Message(conversation_id=conversation.id, sender="bot", content=reply))
