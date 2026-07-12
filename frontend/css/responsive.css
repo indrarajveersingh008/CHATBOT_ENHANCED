@@ -18,36 +18,97 @@
 
 @media (max-width: 768px) {
     .app {
-        flex-direction: column;
+        flex-direction: row;
     }
 
     .sidebar {
-        width: 100%;
-        padding: 15px 12px;
-        border-right: none;
-        border-bottom: 3px solid #22201e;
+        width: 160px;
+        padding: 18px 12px;
+        border-right: 3px solid #22201e;
+        border-bottom: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
 
     .sidebar nav {
-        flex-direction: row;
-        flex-wrap: wrap;
-        margin-top: 16px;
+        flex-direction: column;
+        margin-top: 20px;
+        gap: 10px;
+        width: 100%;
     }
 
-    .sidebar .logo h2,
-    .sidebar .logo p,
+    .sidebar .logo h2 {
+        display: block;
+        font-size: 16px;
+        margin-top: 5px;
+    }
+
+    .sidebar .logo p {
+        display: block;
+        font-size: 9px;
+        margin-top: 2px;
+    }
+
+    .sidebar .menu-btn span,
     .profile span {
-        display: none;
+        display: inline;
+    }
+
+    .logo-circle {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 8px;
+        font-size: 24px;
+        border: 2px solid #22201e;
+        box-shadow: 2px 2px 0px #22201e;
+    }
+
+    .logo-img {
+        padding: 4px;
     }
 
     .menu-btn {
+        width: 100%;
+        height: auto;
+        padding: 10px 12px;
+        display: block;
         font-size: 13px;
-        padding: 10px 4px;
+        font-weight: 600;
+        border-radius: 8px;
+        text-align: left;
+        box-shadow: 2px 2px 0px #22201e;
+    }
+
+    .menu-btn:hover {
+        box-shadow: 3px 3px 0px #22201e;
+        transform: translate(-1px, -1px);
+    }
+
+    .menu-btn.active {
+        transform: translate(1px, 1px);
+        box-shadow: none;
+    }
+
+    .profile {
+        width: 100%;
+        height: auto;
+        padding: 10px 12px;
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        border-radius: 8px;
         text-align: center;
+        box-shadow: 2px 2px 0px #22201e;
+    }
+
+    .topbar {
+        padding: 12px 20px;
+        height: 72px;
     }
 
     .topbar h1 {
-        font-size: 22px;
+        font-size: 20px;
     }
 
     .topbar p {
@@ -55,7 +116,7 @@
     }
 
     .panel-header {
-        padding: 18px 16px 8px;
+        padding: 15px 16px 8px;
         flex-wrap: wrap;
     }
 
@@ -77,26 +138,51 @@
     }
 
     .input-area button {
-        width: 48px;
-        height: 48px;
-        font-size: 18px;
+        width: 44px;
+        height: 44px;
+        font-size: 16px;
     }
 
     .input-area textarea {
-        min-height: 48px;
-        font-size: 15px;
+        min-height: 44px;
+        font-size: 14px;
+        padding: 10px 12px;
     }
 }
 
 @media (max-width: 480px) {
+    .sidebar {
+        width: 140px;
+        padding: 15px 8px;
+    }
+
+    .sidebar .logo h2 {
+        font-size: 14px;
+    }
+
+    .logo-circle {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+
+    .menu-btn, .profile {
+        font-size: 12px;
+        padding: 8px 10px;
+    }
+
     .topbar {
-        height: auto;
-        padding: 14px 16px;
+        height: 64px;
+        padding: 10px 16px;
+    }
+
+    .topbar h1 {
+        font-size: 18px;
     }
 
     .chat-box {
         padding: 12px;
-        gap: 16px;
+        gap: 14px;
     }
 
     .message {
@@ -104,6 +190,19 @@
     }
 
     .input-area {
-        padding: 10px;
+        padding: 8px;
+        gap: 6px;
+    }
+
+    .input-area button {
+        width: 38px;
+        height: 38px;
+        font-size: 14px;
+    }
+
+    .input-area textarea {
+        min-height: 38px;
+        font-size: 13px;
+        padding: 8px 10px;
     }
 }
