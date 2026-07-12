@@ -20,11 +20,12 @@ def extract_youtube_video_id(text: str) -> str | None:
 def get_youtube_transcript(video_id: str) -> str | None:
     """
     Fetches the transcript for a given YouTube video ID.
-    Supports auto-fallback to any available transcript language.
+    Supports local scraper with auto-fallback to a public web API
+    if local scraping is blocked (common on cloud/serverless hosts).
     Returns None if subtitles are disabled, video is private, or an error occurs.
     """
+    # Tier 1: Local scraping using youtube-transcript-api (preferred for speed/local run)
     try:
-        # Create a session with browser-like headers to bypass YouTube bot filters
         session = requests.Session()
         session.headers.update({
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -32,25 +33,39 @@ def get_youtube_transcript(video_id: str) -> str | None:
             "Referer": "https://www.youtube.com/",
         })
         
-        # Instantiate the API with our session client (v1.2.4 structure)
         api = YouTubeTranscriptApi(http_client=session)
         
         try:
-            # Attempt to fetch English transcript first
             transcript_list = api.fetch(video_id, languages=["en"])
         except Exception:
-            # Fallback: List available transcripts and retrieve the first one
             transcripts = api.list(video_id)
             first_transcript = next(iter(transcripts))
             transcript_list = first_transcript.fetch()
             
-        # Parse transcript items as dataclass objects (item.text)
         transcript_text = " ".join([item.text for item in transcript_list])
-        return transcript_text
-        
+        if transcript_text:
+            return transcript_text
+            
     except Exception as e:
-        print(f"Error fetching YouTube transcript for {video_id}: {e}")
-        return None
+        print(f"Local YouTube transcript scraping failed/blocked for {video_id}: {e}")
+        
+    # Tier 2: Fallback to public YouTube transcript web API (bypasses cloud IP blocks)
+    try:
+        print(f"Attempting fallback timedtext API query for video {video_id}...")
+        url = f"https://youtube-transcript.ai/transcript/{video_id}.txt"
+        res = requests.get(url, headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }, timeout=10)
+        
+        if res.status_code == 200 and res.text:
+            # Check if it returned a transcript or some error text
+            if "Transcript:" in res.text or len(res.text) > 100:
+                return res.text
+            
+    except Exception as e:
+        print(f"Fallback YouTube API query failed for {video_id}: {e}")
+        
+    return None
 
 def get_youtube_context(message: str) -> str | None:
     """
