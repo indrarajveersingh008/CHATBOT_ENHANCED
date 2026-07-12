@@ -11,6 +11,7 @@ from ..models.models import Conversation, Message, UploadedFile
 from ..config.settings import settings
 from ..utils.file_reader import read_file_content
 from ..utils.helpers import is_image_file, guess_image_mime_type
+from ..utils.youtube import get_youtube_context
 from ..ai.client import ask_ai, generate_conversation_title
 
 router = APIRouter(tags=["chat"])
@@ -92,6 +93,14 @@ def chat(request: ChatRequest, db: Session = Depends(get_db)):
             total_length += len(part)
 
         files_context = "\n\n".join(files_context_parts) if files_context_parts else None
+
+        # Check for YouTube link and fetch transcript context
+        youtube_context = get_youtube_context(request.message)
+        if youtube_context:
+            if files_context:
+                files_context = f"{files_context}\n\n{youtube_context}"
+            else:
+                files_context = youtube_context
 
         # Base64 encode attached images for the vision model
         attached_images = []
@@ -205,6 +214,14 @@ def edit_or_retry(request: EditRequest, db: Session = Depends(get_db)):
             total_length += len(part)
 
         files_context = "\n\n".join(files_context_parts) if files_context_parts else None
+
+        # Check for YouTube link and fetch transcript context
+        youtube_context = get_youtube_context(request.message)
+        if youtube_context:
+            if files_context:
+                files_context = f"{files_context}\n\n{youtube_context}"
+            else:
+                files_context = youtube_context
 
         # 6. Gather images attached to the target user message
         db_files = target_message.files
