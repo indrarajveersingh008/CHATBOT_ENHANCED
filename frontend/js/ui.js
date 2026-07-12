@@ -397,6 +397,11 @@ const Auth = {
         if (typeof chatAttachBtn !== "undefined" && chatAttachBtn) chatAttachBtn.disabled = true;
         
         if (this.usernameDisplay) this.usernameDisplay.textContent = "Guest";
+
+        // Show Backend URL option for guests
+        const backendRow = document.getElementById("backendUrlRow");
+        if (backendRow) backendRow.classList.remove("hidden");
+
         this.setMode(false);
     },
 
@@ -451,6 +456,10 @@ const Auth = {
         if (typeof startNewChat === "function") {
             startNewChat();
         }
+
+        // Hide Backend URL option for logged-in users
+        const backendRow = document.getElementById("backendUrlRow");
+        if (backendRow) backendRow.classList.add("hidden");
 
         // Show/hide admin menu button
         const isAdmin = localStorage.getItem("authIsAdmin") === "true";
