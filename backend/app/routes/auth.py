@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from ..database.db import get_db
 from ..models.models import User
-from ..utils.security import hash_password, verify_password, create_access_token
+from ..utils.security import hash_password, verify_password, create_access_token, get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -33,8 +33,8 @@ def register(request: AuthRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
     
-    token = create_access_token(user.username)
-    return {"token": token, "username": user.username, "is_admin": user.is_admin}
+    token = create_access_token(user.username, bool(user.is_admin))
+    return {"token": token, "username": user.username, "is_admin": bool(user.is_admin)}
 
 @router.post("/login")
 def login(request: AuthRequest, db: Session = Depends(get_db)):
@@ -45,5 +45,14 @@ def login(request: AuthRequest, db: Session = Depends(get_db)):
     if not user or not verify_password(password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Incorrect username or password")
         
-    token = create_access_token(user.username)
-    return {"token": token, "username": user.username, "is_admin": user.is_admin}
+    token = create_access_token(user.username, bool(user.is_admin))
+    return {"token": token, "username": user.username, "is_admin": bool(user.is_admin)}
+
+@router.get("/me")
+def get_me(current_user: User = Depends(get_current_user)):
+    """Fetch the active user's details and real admin privilege status."""
+    return {
+        "id": current_user.id,
+        "username": current_user.username,
+        "is_admin": bool(current_user.is_admin)
+    }

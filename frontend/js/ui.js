@@ -346,12 +346,20 @@ const Auth = {
         }
     },
 
-    checkSession() {
+    async checkSession() {
         const token = localStorage.getItem("authToken");
         const username = localStorage.getItem("authUsername");
 
         if (token && username) {
-            this.showApp(username);
+            try {
+                // Verify the session and fetch the fresh profile
+                const profile = await Api.getProfile();
+                localStorage.setItem("authIsAdmin", profile.is_admin ? "true" : "false");
+                this.showApp(profile.username);
+            } catch (error) {
+                console.error("Session verification failed on page load:", error);
+                this.handleLogout(true); // Silent logout if token is expired/invalid
+            }
         } else {
             this.showLogin();
         }
@@ -452,8 +460,8 @@ const Auth = {
         }
     },
 
-    handleLogout() {
-        if (!confirm("Are you sure you want to log out?")) return;
+    handleLogout(silent = false) {
+        if (!silent && !confirm("Are you sure you want to log out?")) return;
         localStorage.removeItem("authToken");
         localStorage.removeItem("authUsername");
         localStorage.removeItem("authIsAdmin");
@@ -539,7 +547,15 @@ const Admin = {
             });
         } catch (error) {
             console.error("Failed to load admin stats:", error);
-            this.tableBodyEl.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#b91c1c;">⚠️ Error loading stats. Check server connection.</td></tr>`;
+            // Self-healing: if they are not admin, hide the button, switch panels, and fix localStorage
+            if (error.message && (error.message.includes("403") || error.message.includes("Forbidden") || error.message.includes("privileges"))) {
+                localStorage.setItem("authIsAdmin", "false");
+                const adminBtn = document.getElementById("adminMenuBtn");
+                if (adminBtn) adminBtn.classList.add("hidden");
+                UI.showPanel("chat");
+            } else {
+                this.tableBodyEl.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#b91c1c;">⚠️ Error loading stats. Check server connection.</td></tr>`;
+            }
         }
     },
 

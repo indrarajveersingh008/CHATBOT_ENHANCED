@@ -144,6 +144,13 @@ const Api = {
         return handleResponse(response);
     },
 
+    async getProfile() {
+        const response = await fetch(`${getApiBaseUrl()}/auth/me`, {
+            headers: getAuthHeaders()
+        });
+        return handleResponse(response);
+    },
+
     async getAdminStats() {
         const response = await fetch(`${getApiBaseUrl()}/admin/stats`, {
             headers: getAuthHeaders()

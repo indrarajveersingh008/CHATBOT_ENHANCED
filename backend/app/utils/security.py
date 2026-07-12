@@ -32,11 +32,12 @@ def verify_password(password: str, stored_password: str) -> bool:
     except Exception:
         return False
 
-def create_access_token(username: str) -> str:
-    """Generate JWT access token containing username as subject."""
+def create_access_token(username: str, is_admin: bool = False) -> str:
+    """Generate JWT access token containing username as subject and admin flag."""
     expire = datetime.datetime.utcnow() + datetime.timedelta(minutes=TOKEN_EXPIRE_MINUTES)
     payload = {
         "sub": username,
+        "is_admin": is_admin,
         "exp": expire
     }
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
