@@ -720,7 +720,18 @@ nav {
     border-radius: 50%;
     border: 2px solid #22201e;
 }
-.auth-header-circle.red { background: #ff5f56; }
+.auth-header-circle.red {
+    background: #ff5f56;
+    cursor: pointer;
+    transition: background-color 0.15s, transform 0.1s;
+}
+.auth-header-circle.red:hover {
+    background: #ff3b30;
+    transform: scale(1.1);
+}
+.auth-header-circle.red:active {
+    transform: scale(0.9);
+}
 .auth-header-circle.yellow { background: #ffbd2e; }
 .auth-header-circle.green { background: #27c93f; }
 

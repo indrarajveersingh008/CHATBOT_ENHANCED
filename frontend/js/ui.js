@@ -286,6 +286,11 @@ const Auth = {
         this.formEl?.addEventListener("submit", (e) => this.handleSubmit(e));
         this.logoutBtn?.addEventListener("click", () => this.handleLogout());
 
+        // Close auth overlay when clicking the red macOS close dot
+        document.querySelector(".auth-header-circle.red")?.addEventListener("click", () => {
+            this.overlayEl?.classList.add("hidden");
+        });
+
         this.checkSession();
     },
 
