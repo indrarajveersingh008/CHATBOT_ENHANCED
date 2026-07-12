@@ -78,6 +78,8 @@
 
             <header class="topbar">
 
+                <button id="menuToggleBtn" class="menu-toggle-btn" title="Toggle Menu">☰</button>
+
                 <div>
 
                     <h1>AI Nexus</h1>
@@ -97,16 +99,17 @@
 
                 <footer class="input-area">
 
-                    <button id="clearBtn" title="New chat">🆕</button>
+                    <div class="input-actions-group">
+                        <button id="clearBtn" title="New chat">🆕</button>
+                        <button id="voiceBtn" title="Voice input">🎤</button>
+                        <button id="chatAttachBtn" title="Attach files">➕</button>
+                        <input id="chatFileInput" type="file" multiple style="display: none;">
+                    </div>
 
-                    <button id="voiceBtn" title="Voice input">🎤</button>
-
-                    <button id="chatAttachBtn" title="Attach files">➕</button>
-                    <input id="chatFileInput" type="file" multiple style="display: none;">
-
-                    <textarea id="message" rows="1" placeholder="Ask AI Nexus anything..." autocomplete="off"></textarea>
-
-                    <button id="sendBtn" title="Send">➤</button>
+                    <div class="input-text-group">
+                        <textarea id="message" rows="1" placeholder="Ask AI Nexus anything..." autocomplete="off"></textarea>
+                        <button id="sendBtn" title="Send">➤</button>
+                    </div>
 
                 </footer>
 
@@ -187,6 +190,8 @@
         </main>
 
     </div>
+
+    <div id="sidebarBackdrop" class="sidebar-backdrop hidden"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 

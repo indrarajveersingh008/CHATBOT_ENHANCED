@@ -12,6 +12,31 @@ const UI = {
             btn.addEventListener("click", () => this.showPanel(btn.dataset.panel));
         });
 
+        // Mobile sidebar menu toggle drawer controls
+        const menuToggleBtn = document.getElementById("menuToggleBtn");
+        const sidebar = document.querySelector(".sidebar");
+        const backdrop = document.getElementById("sidebarBackdrop");
+
+        if (menuToggleBtn && sidebar && backdrop) {
+            const openSidebar = () => {
+                sidebar.classList.add("open");
+                backdrop.classList.remove("hidden");
+            };
+
+            const closeSidebar = () => {
+                sidebar.classList.remove("open");
+                backdrop.classList.add("hidden");
+            };
+
+            menuToggleBtn.addEventListener("click", openSidebar);
+            backdrop.addEventListener("click", closeSidebar);
+
+            // Automatically close sidebar drawer when a menu panel is selected
+            document.querySelectorAll(".menu-btn[data-panel]").forEach((btn) => {
+                btn.addEventListener("click", closeSidebar);
+            });
+        }
+
         this.showPanel("chat");
         Files.init();
         Search.init();

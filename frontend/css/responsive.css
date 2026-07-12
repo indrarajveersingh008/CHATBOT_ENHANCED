@@ -1,6 +1,6 @@
 /* ======================================
    AI NEXUS — RESPONSIVE
-====================================== */
+   ====================================== */
 
 @media (max-width: 1024px) {
     .topbar {
@@ -19,92 +19,45 @@
 @media (max-width: 768px) {
     .app {
         flex-direction: row;
+        position: relative;
     }
 
+    /* Transition sidebar to a collapsible sliding drawer */
     .sidebar {
-        width: 160px;
-        padding: 18px 12px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 1000;
+        width: 260px;
+        height: 100vh;
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: 25px;
         border-right: 3px solid #22201e;
         border-bottom: none;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        background: #b8b4af;
+        box-shadow: 5px 0 15px rgba(0, 0, 0, 0.3);
     }
 
-    .sidebar nav {
-        flex-direction: column;
-        margin-top: 20px;
-        gap: 10px;
-        width: 100%;
+    .sidebar.open {
+        transform: translateX(0);
     }
 
-    .sidebar .logo h2 {
-        display: block;
-        font-size: 16px;
-        margin-top: 5px;
+    /* Show hamburger menu toggle button */
+    .menu-toggle-btn {
+        display: flex;
     }
 
-    .sidebar .logo p {
-        display: block;
-        font-size: 9px;
-        margin-top: 2px;
-    }
-
-    .sidebar .menu-btn span,
-    .profile span {
-        display: inline;
-    }
-
-    .logo-circle {
-        width: 48px;
-        height: 48px;
-        margin: 0 auto 8px;
-        font-size: 24px;
-        border: 2px solid #22201e;
-        box-shadow: 2px 2px 0px #22201e;
-    }
-
-    .logo-img {
-        padding: 4px;
-    }
-
-    .menu-btn {
-        width: 100%;
-        height: auto;
-        padding: 10px 12px;
-        display: block;
-        font-size: 13px;
-        font-weight: 600;
-        border-radius: 8px;
-        text-align: left;
-        box-shadow: 2px 2px 0px #22201e;
-    }
-
-    .menu-btn:hover {
-        box-shadow: 3px 3px 0px #22201e;
-        transform: translate(-1px, -1px);
-    }
-
-    .menu-btn.active {
-        transform: translate(1px, 1px);
-        box-shadow: none;
-    }
-
-    .profile {
-        width: 100%;
-        height: auto;
-        padding: 10px 12px;
-        display: block;
-        font-size: 13px;
-        font-weight: 600;
-        border-radius: 8px;
-        text-align: center;
-        box-shadow: 2px 2px 0px #22201e;
-    }
-
+    /* Adjust topbar for mobile spacing */
     .topbar {
         padding: 12px 20px;
         height: 72px;
+        justify-content: flex-start;
+        gap: 12px;
     }
 
     .topbar h1 {
@@ -112,65 +65,90 @@
     }
 
     .topbar p {
-        display: none;
+        font-size: 12px;
     }
 
     .panel-header {
-        padding: 15px 16px 8px;
-        flex-wrap: wrap;
+        padding: 15px 20px 8px;
     }
 
     .item-list,
     .search-bar,
     .settings-list {
-        padding-left: 16px;
-        padding-right: 16px;
+        padding-left: 20px;
+        padding-right: 20px;
     }
 
     .chat-box {
         padding: 16px;
     }
 
+    /* Ensure code blocks scroll horizontally instead of overflowing parent containers */
+    pre {
+        max-width: 100%;
+        overflow-x: auto !important;
+        white-space: pre;
+    }
+
+    code {
+        word-wrap: break-word;
+        white-space: pre-wrap;
+    }
+
+    pre code {
+        white-space: pre;
+        word-wrap: normal;
+    }
+}
+
+/* Stacking bottom input elements for smaller tablet/mobile devices */
+@media (max-width: 600px) {
     .input-area {
-        padding: 12px;
+        flex-direction: column;
+        align-items: stretch;
         gap: 8px;
+        padding: 10px;
+    }
+
+    .input-actions-group {
+        display: flex;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .input-actions-group button {
+        flex: 1;
+        height: 42px;
+        font-size: 16px;
+        width: auto !important; /* Override desktop width: 60px */
+    }
+
+    #clearBtn {
+        border-radius: 8px; /* Match standard button styling */
+    }
+
+    .input-text-group {
+        display: flex;
+        gap: 8px;
+        width: 100%;
         align-items: flex-end;
     }
 
-    .input-area button {
-        width: 44px;
-        height: 44px;
-        font-size: 16px;
-    }
-
-    .input-area textarea {
-        min-height: 44px;
+    .input-text-group textarea {
+        flex: 1;
+        min-height: 42px;
         font-size: 14px;
         padding: 10px 12px;
+    }
+
+    .input-text-group button {
+        width: 54px !important; /* Override desktop width: 60px */
+        height: 42px;
+        font-size: 18px;
     }
 }
 
 @media (max-width: 480px) {
-    .sidebar {
-        width: 140px;
-        padding: 15px 8px;
-    }
-
-    .sidebar .logo h2 {
-        font-size: 14px;
-    }
-
-    .logo-circle {
-        width: 40px;
-        height: 40px;
-        font-size: 20px;
-    }
-
-    .menu-btn, .profile {
-        font-size: 12px;
-        padding: 8px 10px;
-    }
-
     .topbar {
         height: 64px;
         padding: 10px 16px;
@@ -180,29 +158,55 @@
         font-size: 18px;
     }
 
+    .topbar p {
+        display: none; /* Hide subtitle to maximize header space on narrow displays */
+    }
+
     .chat-box {
         padding: 12px;
-        gap: 14px;
+        gap: 16px;
     }
 
     .message {
-        max-width: 95%;
+        max-width: 90%;
     }
 
-    .input-area {
-        padding: 8px;
-        gap: 6px;
+    .bubble {
+        padding: 12px 16px;
+        font-size: 14px;
+        line-height: 1.6;
     }
 
-    .input-area button {
+    .avatar {
         width: 38px;
         height: 38px;
-        font-size: 14px;
+        font-size: 18px;
     }
 
-    .input-area textarea {
-        min-height: 38px;
+    /* Stack settings rows vertically for layout cleanliness */
+    .settings-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 12px 16px;
+    }
+
+    .settings-select {
+        width: 100% !important;
+        text-align: left !important;
+    }
+
+    /* Optimize scrollable file lists */
+    .memory-item {
+        padding: 10px 14px;
+        gap: 8px;
+    }
+
+    .memory-title {
         font-size: 13px;
-        padding: 8px 10px;
+    }
+
+    .memory-date {
+        font-size: 11px;
     }
 }
