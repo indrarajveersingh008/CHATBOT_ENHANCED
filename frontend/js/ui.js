@@ -207,7 +207,7 @@ const Settings = {
         }
 
         if (voiceResponseToggle) {
-            voiceResponseToggle.checked = localStorage.getItem("voiceResponse") !== "false";
+            voiceResponseToggle.checked = localStorage.getItem("voiceResponse") === "true";
             voiceResponseToggle.addEventListener("change", (e) => {
                 localStorage.setItem("voiceResponse", e.target.checked ? "true" : "false");
             });

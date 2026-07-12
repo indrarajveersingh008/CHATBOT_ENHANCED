@@ -160,7 +160,7 @@ const Voice = {
     },
 
     speak(text) {
-        const speakEnabled = localStorage.getItem("voiceResponse") !== "false";
+        const speakEnabled = localStorage.getItem("voiceResponse") === "true";
         if (speakEnabled && 'speechSynthesis' in window) {
             const utterance = new SpeechSynthesisUtterance(text);
             speechSynthesis.speak(utterance);
