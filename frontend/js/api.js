@@ -144,6 +144,21 @@ const Api = {
         return handleResponse(response);
     },
 
+    async getAdminStats() {
+        const response = await fetch(`${getApiBaseUrl()}/admin/stats`, {
+            headers: getAuthHeaders()
+        });
+        return handleResponse(response);
+    },
+
+    async deleteUser(userId) {
+        const response = await fetch(`${getApiBaseUrl()}/admin/users/${userId}`, {
+            method: "DELETE",
+            headers: getAuthHeaders()
+        });
+        return handleResponse(response);
+    },
+
     fileDownloadUrl(fileId) {
         const token = localStorage.getItem("authToken") || "";
         return `${getApiBaseUrl()}/files/${fileId}/download?token=${encodeURIComponent(token)}`;

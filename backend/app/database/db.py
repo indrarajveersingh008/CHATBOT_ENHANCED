@@ -34,6 +34,16 @@ def upgrade_db_schema():
     inspector = inspect(engine)
 
     with engine.begin() as conn:
+        # Check users table columns
+        if "users" in inspector.get_table_names():
+            users_cols = [col["name"] for col in inspector.get_columns("users")]
+            if "is_admin" not in users_cols:
+                try:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT 0"))
+                    print("Migration: added column is_admin to users")
+                except Exception as e:
+                    print(f"Migration: could not add is_admin to users: {e}")
+
         # Check conversations table columns
         if "conversations" in inspector.get_table_names():
             conv_cols = [col["name"] for col in inspector.get_columns("conversations")]

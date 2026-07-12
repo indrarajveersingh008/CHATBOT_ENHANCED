@@ -27,13 +27,14 @@ def register(request: AuthRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Username is already taken")
         
     hashed = hash_password(password)
-    user = User(username=username, hashed_password=hashed)
+    is_admin = username.lower() == "admin"
+    user = User(username=username, hashed_password=hashed, is_admin=is_admin)
     db.add(user)
     db.commit()
     db.refresh(user)
     
     token = create_access_token(user.username)
-    return {"token": token, "username": user.username}
+    return {"token": token, "username": user.username, "is_admin": user.is_admin}
 
 @router.post("/login")
 def login(request: AuthRequest, db: Session = Depends(get_db)):
@@ -45,4 +46,4 @@ def login(request: AuthRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Incorrect username or password")
         
     token = create_access_token(user.username)
-    return {"token": token, "username": user.username}
+    return {"token": token, "username": user.username, "is_admin": user.is_admin}

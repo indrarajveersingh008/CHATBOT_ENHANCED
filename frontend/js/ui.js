@@ -5,7 +5,7 @@
 ====================================== */
 
 const UI = {
-    panels: ["chat", "memory", "files", "search", "settings"],
+    panels: ["chat", "memory", "files", "search", "settings", "admin"],
 
     init() {
         document.querySelectorAll(".menu-btn[data-panel]").forEach((btn) => {
@@ -58,6 +58,7 @@ const UI = {
 
         if (name === "memory") Memory.refreshList();
         if (name === "files") Files.refreshList();
+        if (name === "admin") Admin.refreshStats();
         if (name === "chat") messageInput?.focus();
     }
 };
@@ -329,6 +330,7 @@ const Auth = {
             // Save session
             localStorage.setItem("authToken", res.token);
             localStorage.setItem("authUsername", res.username);
+            localStorage.setItem("authIsAdmin", res.is_admin);
 
             this.showApp(res.username);
         } catch (error) {
@@ -441,15 +443,27 @@ const Auth = {
         if (typeof startNewChat === "function") {
             startNewChat();
         }
+
+        // Show/hide admin menu button
+        const isAdmin = localStorage.getItem("authIsAdmin") === "true";
+        const adminBtn = document.getElementById("adminMenuBtn");
+        if (adminBtn) {
+            adminBtn.classList.toggle("hidden", !isAdmin);
+        }
     },
 
     handleLogout() {
         if (!confirm("Are you sure you want to log out?")) return;
         localStorage.removeItem("authToken");
         localStorage.removeItem("authUsername");
+        localStorage.removeItem("authIsAdmin");
         localStorage.removeItem("chatHistory");
         localStorage.removeItem("currentConversationId");
         
+        // Hide admin button
+        const adminBtn = document.getElementById("adminMenuBtn");
+        if (adminBtn) adminBtn.classList.add("hidden");
+
         // Clear UI states
         if (chatBox) chatBox.innerHTML = "";
         
@@ -463,6 +477,83 @@ const Auth = {
         
         if (typeof startNewChat === "function") {
             startNewChat(true);
+        }
+    }
+};
+
+const Admin = {
+    statsUsersEl: null,
+    statsConvsEl: null,
+    statsFilesEl: null,
+    tableBodyEl: null,
+
+    init() {
+        this.statsUsersEl = document.getElementById("adminStatUsers");
+        this.statsConvsEl = document.getElementById("adminStatConvs");
+        this.statsFilesEl = document.getElementById("adminStatFiles");
+        this.tableBodyEl = document.getElementById("adminUsersTableBody");
+    },
+
+    async refreshStats() {
+        if (!this.statsUsersEl) this.init();
+        if (!this.tableBodyEl) return;
+
+        this.tableBodyEl.innerHTML = `<tr><td colspan="5" style="text-align:center;">Loading statistical data...</td></tr>`;
+
+        try {
+            const data = await Api.getAdminStats();
+            
+            this.statsUsersEl.textContent = data.total_users;
+            this.statsConvsEl.textContent = data.total_conversations;
+            this.statsFilesEl.textContent = data.total_files;
+
+            this.tableBodyEl.innerHTML = "";
+            
+            if (data.users.length === 0) {
+                this.tableBodyEl.innerHTML = `<tr><td colspan="5" style="text-align:center;">No users registered yet.</td></tr>`;
+                return;
+            }
+
+            data.users.forEach((u) => {
+                const row = document.createElement("tr");
+                const roleClass = u.is_admin ? "admin" : "user";
+                const roleText = u.is_admin ? "Admin" : "User";
+                
+                row.innerHTML = `
+                    <td><strong>${escapeHtml(u.username)}</strong></td>
+                    <td><span class="admin-role-badge ${roleClass}">${roleText}</span></td>
+                    <td>${u.conversations_count}</td>
+                    <td>${u.files_count}</td>
+                    <td>
+                        <button class="admin-delete-btn" data-id="${u.id}" ${u.is_admin ? 'disabled' : ''}>Delete</button>
+                    </td>
+                `;
+
+                if (!u.is_admin) {
+                    row.querySelector(".admin-delete-btn").addEventListener("click", () => {
+                        this.deleteUser(u.id, u.username);
+                    });
+                }
+                
+                this.tableBodyEl.appendChild(row);
+            });
+        } catch (error) {
+            console.error("Failed to load admin stats:", error);
+            this.tableBodyEl.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#b91c1c;">⚠️ Error loading stats. Check server connection.</td></tr>`;
+        }
+    },
+
+    async deleteUser(userId, username) {
+        if (!confirm(`Are you sure you want to permanently delete user "${username}"?\nThis will delete all of their chat logs, memories, and files, and cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            await Api.deleteUser(userId);
+            this.refreshStats();
+        } catch (error) {
+            console.error("Failed to delete user:", error);
+            alert(`Error deleting user: ${error.message}`);
         }
     }
 };

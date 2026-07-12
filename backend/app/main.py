@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config.settings import settings
 from .database.db import init_db
-from .routes import chat, memory, files, auth
+from .routes import chat, memory, files, auth, admin
 
 
 @asynccontextmanager
@@ -35,6 +35,7 @@ def home():
 
 
 app.include_router(auth.router)
+app.include_router(admin.router)
 app.include_router(chat.router)
 app.include_router(memory.router)
 app.include_router(files.router)
