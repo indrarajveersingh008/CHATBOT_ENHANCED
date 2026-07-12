@@ -832,6 +832,14 @@ nav {
 }
 
 /* System Administration Dashboard Styling */
+.admin-panel-body {
+    padding: 10px 30px 30px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
 .admin-stats-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));

@@ -195,42 +195,46 @@
             </section>
 
             <!-- Admin Panel -->
-            <section id="panel-admin" class="panel-content hidden">
-                <h2>System Administration</h2>
-                <p class="panel-subtitle">Overview of users, statistics, and storage.</p>
-                
-                <div class="admin-stats-container">
-                    <div class="admin-stat-card">
-                        <span class="stat-number" id="adminStatUsers">0</span>
-                        <span class="stat-label">Total Users</span>
-                    </div>
-                    <div class="admin-stat-card">
-                        <span class="stat-number" id="adminStatConvs">0</span>
-                        <span class="stat-label">Conversations</span>
-                    </div>
-                    <div class="admin-stat-card">
-                        <span class="stat-number" id="adminStatFiles">0</span>
-                        <span class="stat-label">Uploaded Files</span>
-                    </div>
+            <section id="panel-admin" class="panel hidden">
+                <div class="panel-header">
+                    <h2>🔑 System Administration</h2>
                 </div>
+                <div class="admin-panel-body">
+                    <p class="panel-subtitle">Overview of users, statistics, and storage.</p>
+                    
+                    <div class="admin-stats-container">
+                        <div class="admin-stat-card">
+                            <span class="stat-number" id="adminStatUsers">0</span>
+                            <span class="stat-label">Total Users</span>
+                        </div>
+                        <div class="admin-stat-card">
+                            <span class="stat-number" id="adminStatConvs">0</span>
+                            <span class="stat-label">Conversations</span>
+                        </div>
+                        <div class="admin-stat-card">
+                            <span class="stat-number" id="adminStatFiles">0</span>
+                            <span class="stat-label">Uploaded Files</span>
+                        </div>
+                    </div>
 
-                <div class="admin-users-section">
-                    <h3>Registered Users</h3>
-                    <div class="admin-table-wrapper">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>Username</th>
-                                    <th>Role</th>
-                                    <th>Chats</th>
-                                    <th>Files</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="adminUsersTableBody">
-                                <!-- Populated dynamically by JS -->
-                            </tbody>
-                        </table>
+                    <div class="admin-users-section">
+                        <h3>Registered Users</h3>
+                        <div class="admin-table-wrapper">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Username</th>
+                                        <th>Role</th>
+                                        <th>Chats</th>
+                                        <th>Files</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminUsersTableBody">
+                                    <!-- Populated dynamically by JS -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </section>
