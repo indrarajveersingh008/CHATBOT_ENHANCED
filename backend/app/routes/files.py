@@ -1,13 +1,15 @@
 import os
 
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+from typing import Optional
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Request
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from ..database.db import get_db
-from ..models.models import UploadedFile
+from ..models.models import UploadedFile, User
 from ..utils.helpers import safe_filename, normalize_content_type
 from ..config.settings import settings
+from ..utils.security import get_current_user, decode_access_token
 
 router = APIRouter(prefix="/files", tags=["files"])
 
@@ -18,7 +20,7 @@ MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB
 
 
 @router.post("/upload")
-async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     contents = await file.read()
 
     if len(contents) > MAX_UPLOAD_BYTES:
@@ -35,6 +37,7 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
         stored_name=stored_name,
         content_type=normalize_content_type(file.filename, file.content_type),
         size=len(contents),
+        user_id=current_user.id
     )
     db.add(record)
     db.commit()
@@ -49,8 +52,8 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
 
 
 @router.get("")
-def list_files(db: Session = Depends(get_db)):
-    files = db.query(UploadedFile).order_by(UploadedFile.uploaded_at.desc()).all()
+def list_files(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    files = db.query(UploadedFile).filter(UploadedFile.user_id == current_user.id).order_by(UploadedFile.uploaded_at.desc()).all()
     return [
         {
             "id": f.id,
@@ -64,8 +67,25 @@ def list_files(db: Session = Depends(get_db)):
 
 
 @router.get("/{file_id}/download")
-def download_file(file_id: int, db: Session = Depends(get_db)):
-    record = db.query(UploadedFile).filter(UploadedFile.id == file_id).first()
+def download_file(file_id: int, request: Request, token: Optional[str] = None, db: Session = Depends(get_db)):
+    auth_token = token
+    if not auth_token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            auth_token = auth_header.split(" ")[1]
+            
+    if not auth_token:
+        raise HTTPException(status_code=401, detail="Authentication token required")
+        
+    username = decode_access_token(auth_token)
+    if not username:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+        
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+        
+    record = db.query(UploadedFile).filter(UploadedFile.id == file_id, UploadedFile.user_id == user.id).first()
     if not record:
         raise HTTPException(status_code=404, detail="File not found")
 
@@ -77,8 +97,8 @@ def download_file(file_id: int, db: Session = Depends(get_db)):
 
 
 @router.delete("/{file_id}")
-def delete_file(file_id: int, db: Session = Depends(get_db)):
-    record = db.query(UploadedFile).filter(UploadedFile.id == file_id).first()
+def delete_file(file_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    record = db.query(UploadedFile).filter(UploadedFile.id == file_id, UploadedFile.user_id == current_user.id).first()
     if not record:
         raise HTTPException(status_code=404, detail="File not found")
 

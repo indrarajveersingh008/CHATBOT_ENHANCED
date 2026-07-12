@@ -7,12 +7,13 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..database.db import get_db
-from ..models.models import Conversation, Message, UploadedFile
+from ..models.models import Conversation, Message, UploadedFile, User
 from ..config.settings import settings
 from ..utils.file_reader import read_file_content
 from ..utils.helpers import is_image_file, guess_image_mime_type
 from ..utils.youtube import get_youtube_context
 from ..ai.client import ask_ai, generate_conversation_title
+from ..utils.security import get_current_user
 
 router = APIRouter(tags=["chat"])
 
@@ -25,22 +26,24 @@ class ChatRequest(BaseModel):
 
 
 @router.post("/chat")
-def chat(request: ChatRequest, db: Session = Depends(get_db)):
+def chat(request: ChatRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     try:
         conversation = None
         if request.conversation_id is not None:
             conversation = (
                 db.query(Conversation)
-                .filter(Conversation.id == request.conversation_id)
+                .filter(Conversation.id == request.conversation_id, Conversation.user_id == current_user.id)
                 .first()
             )
+            if not conversation:
+                raise HTTPException(status_code=403, detail="Not authorized to access this conversation")
 
         requested_model = request.model_name or settings.MODEL_NAME
 
         # No conversation yet (first message, or bad id) -> start a new one.
         if conversation is None:
             title = generate_conversation_title(request.message, requested_model)
-            conversation = Conversation(title=title)
+            conversation = Conversation(title=title, user_id=current_user.id)
             db.add(conversation)
             db.commit()
             db.refresh(conversation)
@@ -66,8 +69,9 @@ def chat(request: ChatRequest, db: Session = Depends(get_db)):
         uploaded_files = (
             db.query(UploadedFile)
             .filter(
-                (UploadedFile.conversation_id == None) |
-                (UploadedFile.conversation_id == conversation.id)
+                (UploadedFile.user_id == current_user.id) &
+                ((UploadedFile.conversation_id == None) |
+                 (UploadedFile.conversation_id == conversation.id))
             )
             .all()
         )
@@ -153,7 +157,7 @@ class EditRequest(BaseModel):
 
 
 @router.post("/chat/edit")
-def edit_or_retry(request: EditRequest, db: Session = Depends(get_db)):
+def edit_or_retry(request: EditRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     try:
         # 1. Find the target user message
         target_message = db.query(Message).filter(Message.id == request.message_id).first()
@@ -161,6 +165,9 @@ def edit_or_retry(request: EditRequest, db: Session = Depends(get_db)):
             raise HTTPException(status_code=404, detail="Message not found")
 
         conversation = target_message.conversation
+        if conversation.user_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Not authorized to access this conversation")
+
         requested_model = request.model_name or settings.MODEL_NAME
 
         # 2. Delete all subsequent messages in the conversation (where message.id > target_message.id)
@@ -186,8 +193,9 @@ def edit_or_retry(request: EditRequest, db: Session = Depends(get_db)):
         uploaded_files = (
             db.query(UploadedFile)
             .filter(
-                (UploadedFile.conversation_id == None) |
-                (UploadedFile.conversation_id == conversation.id)
+                (UploadedFile.user_id == current_user.id) &
+                ((UploadedFile.conversation_id == None) |
+                 (UploadedFile.conversation_id == conversation.id))
             )
             .all()
         )

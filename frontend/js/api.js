@@ -11,6 +11,15 @@ function getApiBaseUrl() {
         : "https://chatbot-enhanced.onrender.com");
 }
 
+function getAuthHeaders(extraHeaders = {}) {
+    const token = localStorage.getItem("authToken");
+    const headers = { ...extraHeaders };
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+    }
+    return headers;
+}
+
 async function handleResponse(response) {
     if (!response.ok) {
         let detail = `Request failed (${response.status})`;
@@ -26,12 +35,32 @@ async function handleResponse(response) {
 }
 
 const Api = {
+    /* ---------- Authentication ---------- */
+
+    async login(username, password) {
+        const response = await fetch(`${getApiBaseUrl()}/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+        });
+        return handleResponse(response);
+    },
+
+    async register(username, password) {
+        const response = await fetch(`${getApiBaseUrl()}/auth/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+        });
+        return handleResponse(response);
+    },
+
     /* ---------- Chat ---------- */
 
     async sendMessage(message, conversationId, modelName, fileIds = null) {
         const response = await fetch(`${getApiBaseUrl()}/chat`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: getAuthHeaders({ "Content-Type": "application/json" }),
             body: JSON.stringify({
                 message,
                 conversation_id: conversationId ?? null,
@@ -45,7 +74,7 @@ const Api = {
     async editOrRetryMessage(messageId, message, modelName) {
         const response = await fetch(`${getApiBaseUrl()}/chat/edit`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: getAuthHeaders({ "Content-Type": "application/json" }),
             body: JSON.stringify({
                 message_id: messageId,
                 message,
@@ -58,31 +87,40 @@ const Api = {
     /* ---------- Memory (conversation history) ---------- */
 
     async listConversations() {
-        const response = await fetch(`${getApiBaseUrl()}/memory/conversations`);
+        const response = await fetch(`${getApiBaseUrl()}/memory/conversations`, {
+            headers: getAuthHeaders()
+        });
         return handleResponse(response);
     },
 
     async getConversation(conversationId) {
-        const response = await fetch(`${getApiBaseUrl()}/memory/conversations/${conversationId}`);
+        const response = await fetch(`${getApiBaseUrl()}/memory/conversations/${conversationId}`, {
+            headers: getAuthHeaders()
+        });
         return handleResponse(response);
     },
 
     async deleteConversation(conversationId) {
         const response = await fetch(`${getApiBaseUrl()}/memory/conversations/${conversationId}`, {
-            method: "DELETE"
+            method: "DELETE",
+            headers: getAuthHeaders()
         });
         return handleResponse(response);
     },
 
     async searchMessages(query) {
-        const response = await fetch(`${getApiBaseUrl()}/memory/search?q=${encodeURIComponent(query)}`);
+        const response = await fetch(`${getApiBaseUrl()}/memory/search?q=${encodeURIComponent(query)}`, {
+            headers: getAuthHeaders()
+        });
         return handleResponse(response);
     },
 
     /* ---------- Files ---------- */
 
     async listFiles() {
-        const response = await fetch(`${getApiBaseUrl()}/files`);
+        const response = await fetch(`${getApiBaseUrl()}/files`, {
+            headers: getAuthHeaders()
+        });
         return handleResponse(response);
     },
 
@@ -92,6 +130,7 @@ const Api = {
 
         const response = await fetch(`${getApiBaseUrl()}/files/upload`, {
             method: "POST",
+            headers: getAuthHeaders(),
             body: formData
         });
         return handleResponse(response);
@@ -99,12 +138,14 @@ const Api = {
 
     async deleteFile(fileId) {
         const response = await fetch(`${getApiBaseUrl()}/files/${fileId}`, {
-            method: "DELETE"
+            method: "DELETE",
+            headers: getAuthHeaders()
         });
         return handleResponse(response);
     },
 
     fileDownloadUrl(fileId) {
-        return `${getApiBaseUrl()}/files/${fileId}/download`;
+        const token = localStorage.getItem("authToken") || "";
+        return `${getApiBaseUrl()}/files/${fileId}/download?token=${encodeURIComponent(token)}`;
     }
 };

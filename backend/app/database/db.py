@@ -29,22 +29,41 @@ def init_db():
 
 
 def upgrade_db_schema():
-    """Run lightweight schema migrations to add missing columns to uploaded_files table."""
+    """Run lightweight schema migrations to add missing columns to existing tables."""
     from sqlalchemy import inspect, text
     inspector = inspect(engine)
-    columns = [col["name"] for col in inspector.get_columns("uploaded_files")]
 
     with engine.begin() as conn:
-        if "conversation_id" not in columns:
-            try:
-                conn.execute(text("ALTER TABLE uploaded_files ADD COLUMN conversation_id INTEGER REFERENCES conversations(id) ON DELETE CASCADE"))
-                print("Migration: added column conversation_id to uploaded_files")
-            except Exception as e:
-                print(f"Migration: could not add conversation_id: {e}")
-        if "message_id" not in columns:
-            try:
-                conn.execute(text("ALTER TABLE uploaded_files ADD COLUMN message_id INTEGER REFERENCES messages(id) ON DELETE CASCADE"))
-                print("Migration: added column message_id to uploaded_files")
-            except Exception as e:
-                print(f"Migration: could not add message_id: {e}")
+        # Check conversations table columns
+        if "conversations" in inspector.get_table_names():
+            conv_cols = [col["name"] for col in inspector.get_columns("conversations")]
+            if "user_id" not in conv_cols:
+                try:
+                    conn.execute(text("ALTER TABLE conversations ADD COLUMN user_id INTEGER REFERENCES users(id) ON DELETE CASCADE"))
+                    print("Migration: added column user_id to conversations")
+                except Exception as e:
+                    print(f"Migration: could not add user_id to conversations: {e}")
+
+        # Check uploaded_files table columns
+        if "uploaded_files" in inspector.get_table_names():
+            files_cols = [col["name"] for col in inspector.get_columns("uploaded_files")]
+            if "conversation_id" not in files_cols:
+                try:
+                    conn.execute(text("ALTER TABLE uploaded_files ADD COLUMN conversation_id INTEGER REFERENCES conversations(id) ON DELETE CASCADE"))
+                    print("Migration: added column conversation_id to uploaded_files")
+                except Exception as e:
+                    print(f"Migration: could not add conversation_id: {e}")
+            if "message_id" not in files_cols:
+                try:
+                    conn.execute(text("ALTER TABLE uploaded_files ADD COLUMN message_id INTEGER REFERENCES messages(id) ON DELETE CASCADE"))
+                    print("Migration: added column message_id to uploaded_files")
+                except Exception as e:
+                    print(f"Migration: could not add message_id: {e}")
+            if "user_id" not in files_cols:
+                try:
+                    conn.execute(text("ALTER TABLE uploaded_files ADD COLUMN user_id INTEGER REFERENCES users(id) ON DELETE CASCADE"))
+                    print("Migration: added column user_id to uploaded_files")
+                except Exception as e:
+                    print(f"Migration: could not add user_id to uploaded_files: {e}")
+
 

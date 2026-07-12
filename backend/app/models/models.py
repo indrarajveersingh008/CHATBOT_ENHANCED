@@ -6,6 +6,28 @@ from sqlalchemy.orm import relationship
 from ..database.db import Base
 
 
+class User(Base):
+    """User account details for authentication and workspace segregation."""
+
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(100), unique=True, index=True, nullable=False)
+    hashed_password = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    conversations = relationship(
+        "Conversation",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    files = relationship(
+        "UploadedFile",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+
 class Conversation(Base):
     """A single chat thread, shown in the sidebar 'Memory' panel."""
 
@@ -14,7 +36,11 @@ class Conversation(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), default="New Chat")
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    
+    # Associated user
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
 
+    user = relationship("User", back_populates="conversations")
     messages = relationship(
         "Message",
         back_populates="conversation",
@@ -61,6 +87,10 @@ class UploadedFile(Base):
 
     conversation_id = Column(Integer, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=True)
     message_id = Column(Integer, ForeignKey("messages.id", ondelete="CASCADE"), nullable=True)
+    
+    # Associated user
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
 
+    user = relationship("User", back_populates="files")
     conversation = relationship("Conversation", back_populates="files")
     message = relationship("Message", back_populates="files")

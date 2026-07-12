@@ -7,3 +7,4 @@ SQLAlchemy==2.0.36
 python-multipart==0.0.20
 pypdf==5.1.0
 youtube-transcript-api==1.2.4
+pyjwt==2.8.0

@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config.settings import settings
 from .database.db import init_db
-from .routes import chat, memory, files
+from .routes import chat, memory, files, auth
 
 
 @asynccontextmanager
@@ -34,6 +34,7 @@ def home():
     return {"status": "Running", "application": "AI Nexus"}
 
 
+app.include_router(auth.router)
 app.include_router(chat.router)
 app.include_router(memory.router)
 app.include_router(files.router)

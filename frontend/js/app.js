@@ -10,6 +10,11 @@ console.log("AI Nexus script loaded");
 window.addEventListener("load", function () {
     chatBox.innerHTML = "";
 
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+        return;
+    }
+
     if (chatHistory.length > 0) {
         chatHistory.forEach((msg) => addMessage(msg.text, msg.sender, false, msg.files));
     } else {

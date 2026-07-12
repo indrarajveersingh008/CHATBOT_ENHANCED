@@ -65,8 +65,8 @@
             </nav>
 
             <div class="sidebar-bottom">
-                <div class="profile">
-                    👤 <span>Rajveer</span>
+                <div id="profileContainer" class="sidebar-profile-area">
+                    <!-- Populated dynamically by JS -->
                 </div>
                 <footer class="sidebar-footer">
                     Made with ❤️ by Rajveer Singh • AI Nexus 2.0
@@ -195,6 +195,36 @@
     </div>
 
     <div id="sidebarBackdrop" class="sidebar-backdrop hidden"></div>
+
+    <!-- Neubrutalist Auth Overlay -->
+    <div id="authOverlay" class="auth-overlay hidden">
+        <div class="auth-box">
+            <div class="auth-header">
+                <div class="auth-header-circle red"></div>
+                <div class="auth-header-circle yellow"></div>
+                <div class="auth-header-circle green"></div>
+                <h3>AI Nexus System</h3>
+            </div>
+            <div class="auth-body">
+                <div class="auth-tabs">
+                    <button id="tabLogin" class="auth-tab-btn active">Sign In</button>
+                    <button id="tabRegister" class="auth-tab-btn">Sign Up</button>
+                </div>
+                <form id="authForm">
+                    <div class="form-group">
+                        <label for="authUsername">Username</label>
+                        <input type="text" id="authUsername" required placeholder="Enter username" autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="authPassword">Password</label>
+                        <input type="password" id="authPassword" required placeholder="Enter password" autocomplete="current-password">
+                    </div>
+                    <div id="authError" class="auth-error hidden"></div>
+                    <button type="submit" id="authSubmitBtn" class="auth-submit-btn">Login</button>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 

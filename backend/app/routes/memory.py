@@ -2,15 +2,19 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..database.db import get_db
-from ..models.models import Conversation, Message
+from ..models.models import Conversation, Message, User
+from ..utils.security import get_current_user
 
 router = APIRouter(prefix="/memory", tags=["memory"])
 
 
 @router.get("/conversations")
-def list_conversations(db: Session = Depends(get_db)):
+def list_conversations(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     conversations = (
-        db.query(Conversation).order_by(Conversation.created_at.desc()).all()
+        db.query(Conversation)
+        .filter(Conversation.user_id == current_user.id)
+        .order_by(Conversation.created_at.desc())
+        .all()
     )
     return [
         {"id": c.id, "title": c.title, "created_at": c.created_at.isoformat()}
@@ -19,8 +23,8 @@ def list_conversations(db: Session = Depends(get_db)):
 
 
 @router.get("/conversations/{conversation_id}")
-def get_conversation(conversation_id: int, db: Session = Depends(get_db)):
-    conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
+def get_conversation(conversation_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    conversation = db.query(Conversation).filter(Conversation.id == conversation_id, Conversation.user_id == current_user.id).first()
     if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
@@ -49,8 +53,8 @@ def get_conversation(conversation_id: int, db: Session = Depends(get_db)):
 
 
 @router.delete("/conversations/{conversation_id}")
-def delete_conversation(conversation_id: int, db: Session = Depends(get_db)):
-    conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
+def delete_conversation(conversation_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    conversation = db.query(Conversation).filter(Conversation.id == conversation_id, Conversation.user_id == current_user.id).first()
     if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
@@ -71,7 +75,7 @@ def delete_conversation(conversation_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/search")
-def search_messages(q: str = "", db: Session = Depends(get_db)):
+def search_messages(q: str = "", db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Search across every stored message's content. Used by the sidebar Search panel."""
     q = q.strip()
     if not q:
@@ -80,7 +84,11 @@ def search_messages(q: str = "", db: Session = Depends(get_db)):
     like_query = f"%{q}%"
     results = (
         db.query(Message)
-        .filter(Message.content.ilike(like_query))
+        .join(Conversation)
+        .filter(
+            Conversation.user_id == current_user.id,
+            Message.content.ilike(like_query)
+        )
         .order_by(Message.created_at.desc())
         .limit(50)
         .all()

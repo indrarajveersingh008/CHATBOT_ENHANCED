@@ -41,6 +41,7 @@ const UI = {
         Files.init();
         Search.init();
         Settings.init();
+        Auth.init();
     },
 
     showPanel(name) {
@@ -250,6 +251,219 @@ const Settings = {
             localStorage.removeItem("chatHistory");
             alert("Local cache cleared.");
         });
+    }
+};
+
+const Auth = {
+    overlayEl: null,
+    formEl: null,
+    usernameInput: null,
+    passwordInput: null,
+    errorEl: null,
+    submitBtn: null,
+    tabLogin: null,
+    tabRegister: null,
+    logoutBtn: null,
+    usernameDisplay: null,
+    isRegisterMode: false,
+
+    init() {
+        this.overlayEl = document.getElementById("authOverlay");
+        this.formEl = document.getElementById("authForm");
+        this.usernameInput = document.getElementById("authUsername");
+        this.passwordInput = document.getElementById("authPassword");
+        this.errorEl = document.getElementById("authError");
+        this.submitBtn = document.getElementById("authSubmitBtn");
+        this.tabLogin = document.getElementById("tabLogin");
+        this.tabRegister = document.getElementById("tabRegister");
+        this.logoutBtn = document.getElementById("logoutBtn");
+        this.usernameDisplay = document.getElementById("usernameDisplay");
+
+        // Event listeners
+        this.tabLogin?.addEventListener("click", () => this.setMode(false));
+        this.tabRegister?.addEventListener("click", () => this.setMode(true));
+        this.formEl?.addEventListener("submit", (e) => this.handleSubmit(e));
+        this.logoutBtn?.addEventListener("click", () => this.handleLogout());
+
+        this.checkSession();
+    },
+
+    setMode(isRegister) {
+        this.isRegisterMode = isRegister;
+        if (this.errorEl) this.errorEl.classList.add("hidden");
+        if (this.usernameInput) this.usernameInput.value = "";
+        if (this.passwordInput) this.passwordInput.value = "";
+        
+        if (isRegister) {
+            this.tabRegister?.classList.add("active");
+            this.tabLogin?.classList.remove("active");
+            if (this.submitBtn) this.submitBtn.textContent = "Sign Up";
+        } else {
+            this.tabLogin?.classList.add("active");
+            this.tabRegister?.classList.remove("active");
+            if (this.submitBtn) this.submitBtn.textContent = "Sign In";
+        }
+    },
+
+    async handleSubmit(e) {
+        e.preventDefault();
+        const username = this.usernameInput?.value.trim();
+        const password = this.passwordInput?.value;
+
+        if (!username || !password) return;
+
+        if (this.errorEl) this.errorEl.classList.add("hidden");
+        if (this.submitBtn) {
+            this.submitBtn.disabled = true;
+            this.submitBtn.textContent = this.isRegisterMode ? "Signing Up..." : "Signing In...";
+        }
+
+        try {
+            let res;
+            if (this.isRegisterMode) {
+                res = await Api.register(username, password);
+            } else {
+                res = await Api.login(username, password);
+            }
+
+            // Save session
+            localStorage.setItem("authToken", res.token);
+            localStorage.setItem("authUsername", res.username);
+
+            this.showApp(res.username);
+        } catch (error) {
+            console.error("Auth failed:", error);
+            if (this.errorEl) {
+                this.errorEl.textContent = error.message || "Authentication failed.";
+                this.errorEl.classList.remove("hidden");
+            }
+            if (this.submitBtn) {
+                this.submitBtn.disabled = false;
+                this.submitBtn.textContent = this.isRegisterMode ? "Sign Up" : "Sign In";
+            }
+        }
+    },
+
+    checkSession() {
+        const token = localStorage.getItem("authToken");
+        const username = localStorage.getItem("authUsername");
+
+        if (token && username) {
+            this.showApp(username);
+        } else {
+            this.showLogin();
+        }
+    },
+
+    openModalOnInputClick() {
+        const token = localStorage.getItem("authToken");
+        if (!token) {
+            const overlay = document.getElementById("authOverlay");
+            if (overlay) overlay.classList.remove("hidden");
+        }
+    },
+
+    showLogin() {
+        // Render guest button at bottom left of dashboard
+        const profileArea = document.getElementById("profileContainer");
+        if (profileArea) {
+            profileArea.innerHTML = `
+                <button id="profileAuthBtn" class="profile-btn">🔑 Sign In / Sign Up</button>
+            `;
+            document.getElementById("profileAuthBtn")?.addEventListener("click", () => {
+                this.overlayEl?.classList.remove("hidden");
+            });
+        }
+        
+        // Disable chat input
+        if (typeof messageInput !== "undefined" && messageInput) {
+            messageInput.disabled = true;
+            messageInput.placeholder = "Please sign in to start chatting...";
+            messageInput.style.cursor = "pointer";
+            messageInput.removeEventListener("click", this.openModalOnInputClick);
+            messageInput.addEventListener("click", this.openModalOnInputClick);
+        }
+        if (typeof sendBtn !== "undefined" && sendBtn) sendBtn.disabled = true;
+        if (typeof chatAttachBtn !== "undefined" && chatAttachBtn) chatAttachBtn.disabled = true;
+        
+        if (this.usernameDisplay) this.usernameDisplay.textContent = "Guest";
+        this.setMode(false);
+    },
+
+    showApp(username) {
+        this.overlayEl?.classList.add("hidden");
+        
+        // Render user profile and logout at bottom left of dashboard
+        const profileArea = document.getElementById("profileContainer");
+        if (profileArea) {
+            profileArea.innerHTML = `
+                <div class="profile-container">
+                    <div class="profile-user-info" title="${username}">
+                        👤 <span>${username}</span>
+                    </div>
+                    <button id="logoutBtn" class="logout-btn" title="Logout">Logout</button>
+                </div>
+            `;
+            document.getElementById("logoutBtn")?.addEventListener("click", () => this.handleLogout());
+        }
+        
+        if (this.usernameDisplay) this.usernameDisplay.textContent = username;
+        if (this.submitBtn) this.submitBtn.disabled = false;
+        
+        // Enable chat input
+        if (typeof messageInput !== "undefined" && messageInput) {
+            messageInput.disabled = false;
+            messageInput.placeholder = "Ask AI Nexus anything...";
+            messageInput.style.cursor = "text";
+            messageInput.removeEventListener("click", this.openModalOnInputClick);
+        }
+        if (typeof sendBtn !== "undefined" && sendBtn) sendBtn.disabled = false;
+        if (typeof chatAttachBtn !== "undefined" && chatAttachBtn) chatAttachBtn.disabled = false;
+        
+        // Initialize or refresh memory and files
+        if (typeof Memory !== "undefined") {
+            if (Memory.listEl === null) {
+                Memory.init();
+            } else {
+                Memory.refreshList();
+            }
+        }
+        
+        if (typeof Files !== "undefined") {
+            if (Files.listEl === null) {
+                Files.init();
+            } else {
+                Files.refreshList();
+            }
+        }
+        
+        // Reset chat history to show clean welcome message for the logged in user
+        if (typeof startNewChat === "function") {
+            startNewChat();
+        }
+    },
+
+    handleLogout() {
+        if (!confirm("Are you sure you want to log out?")) return;
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("authUsername");
+        localStorage.removeItem("chatHistory");
+        localStorage.removeItem("currentConversationId");
+        
+        // Clear UI states
+        if (chatBox) chatBox.innerHTML = "";
+        
+        const filesList = document.getElementById("filesList");
+        if (filesList) filesList.innerHTML = `<li class="memory-empty">Please log in.</li>`;
+        
+        const memoryList = document.getElementById("memoryList");
+        if (memoryList) memoryList.innerHTML = `<li class="memory-empty">Please log in.</li>`;
+        
+        this.showLogin();
+        
+        if (typeof startNewChat === "function") {
+            startNewChat(true);
+        }
     }
 };
 
