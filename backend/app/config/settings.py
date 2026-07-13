@@ -20,7 +20,15 @@ class Settings:
 
     # SQLite by default so the project runs with zero extra setup.
     # Set DATABASE_URL on Render/production to point at Postgres instead.
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./ai_nexus.db")
+    # We also check POSTGRES_URL, which is injected by Vercel/Supabase/Neon database integrations.
+    _db_url: str = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL") or "sqlite:///./ai_nexus.db"
+    
+    # SQLAlchemy 1.4+ deprecated postgres:// connection URLs. If it starts with postgres://,
+    # convert it to postgresql:// so that SQLAlchemy can load the PostgreSQL driver correctly.
+    if _db_url.startswith("postgres://"):
+        _db_url = _db_url.replace("postgres://", "postgresql://", 1)
+
+    DATABASE_URL: str = _db_url
 
     UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "uploads")
 

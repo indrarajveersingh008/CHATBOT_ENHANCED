@@ -24,6 +24,14 @@ def get_db():
 def init_db():
     """Create tables on startup if they don't exist yet."""
     from ..models import models  # noqa: F401 - import so tables register with Base
+    
+    db_url_lower = settings.DATABASE_URL.lower()
+    if "sqlite" in db_url_lower:
+        print("ℹ️  Database: Using local SQLite database (ai_nexus.db). Note: Data will NOT persist on serverless platforms like Vercel or Render free tier.")
+    else:
+        db_type = "PostgreSQL" if "postgres" in db_url_lower else "Remote"
+        print(f"ℹ️  Database: Connected to remote {db_type} database. Data will persist.")
+
     Base.metadata.create_all(bind=engine)
     upgrade_db_schema()
 
