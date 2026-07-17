@@ -1,3 +1,4 @@
+import re
 from openai import OpenAI
 
 from ..config.settings import settings
@@ -80,15 +81,45 @@ def ask_ai(
         messages.append({"role": "user", "content": message})
 
     chosen_model = model_name or settings.MODEL_NAME
+    current_max_tokens = settings.MAX_TOKENS
+    completion = None
 
-    completion = client.chat.completions.create(
-        model=chosen_model,
-        messages=messages,
-        max_tokens=settings.MAX_TOKENS,
-        temperature=0.7,
-    )
+    for attempt in range(3):
+        try:
+            completion = client.chat.completions.create(
+                model=chosen_model,
+                messages=messages,
+                max_tokens=current_max_tokens,
+                temperature=0.7,
+            )
+            break
+        except Exception as e:
+            err_msg = str(e)
+            is_402 = False
+            if hasattr(e, "status_code") and e.status_code == 402:
+                is_402 = True
+            elif "402" in err_msg or "fewer max_tokens" in err_msg or "can only afford" in err_msg:
+                is_402 = True
 
-    if not completion.choices:
+            if is_402 and attempt < 2:
+                match = re.search(r"can only afford (\d+)", err_msg)
+                if match:
+                    afforded = int(match.group(1))
+                    # Request slightly less than afforded to be safe, but at least 1
+                    new_max_tokens = max(1, afforded - 5)
+                    if new_max_tokens < current_max_tokens:
+                        print(f"OpenRouter 402 error: requested {current_max_tokens}, can only afford {afforded}. Retrying with max_tokens={new_max_tokens}")
+                        current_max_tokens = new_max_tokens
+                        continue
+                else:
+                    new_max_tokens = current_max_tokens // 2
+                    if new_max_tokens >= 50:
+                        print(f"OpenRouter 402 error: Retrying with halved max_tokens={new_max_tokens}")
+                        current_max_tokens = new_max_tokens
+                        continue
+            raise e
+
+    if not completion or not completion.choices:
         raise ValueError("No response from AI.")
 
     choice_message = completion.choices[0].message
