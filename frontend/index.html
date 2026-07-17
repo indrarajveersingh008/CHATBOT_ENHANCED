@@ -185,7 +185,23 @@
                             <option value="google/gemini-2.5-flash">Gemini 2.5 Flash (Vision)</option>
                             <option value="meta-llama/llama-3.3-70b-instruct">Llama 3.3 70B (Text only)</option>
                             <option value="openai/gpt-4o-mini">GPT-4o Mini (Vision)</option>
+                            <option value="sao10k/l3.3-euryale-70b">Llama 3.3 Euryale 70B (18+ Roleplay)</option>
+                            <option value="gryphe/mythomax-l2-13b">MythoMax L2 13B (Roleplay/Creative)</option>
+                            <option value="nousresearch/hermes-3-llama-3.1-70b">Hermes 3 Llama 3.1 70B (Uncensored)</option>
+                            <option value="nousresearch/hermes-3-llama-3.1-405b:free">Hermes 3 405B (FREE / Uncensored)</option>
                         </select>
+                    </div>
+                    <div class="settings-row flex-column" style="display: flex; flex-direction: column; align-items: stretch; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <span>System Prompt / Persona</span>
+                            <select id="personaSelect" class="settings-select">
+                                <option value="default">AI Nexus (Default)</option>
+                                <option value="roleplay">18+ Creative Roleplay</option>
+                                <option value="uncensored">Uncensored Assistant</option>
+                                <option value="custom">Custom Prompt...</option>
+                            </select>
+                        </div>
+                        <textarea id="systemPromptTextarea" class="settings-textarea hidden" rows="4" placeholder="Enter custom system prompt guidelines..." style="width: 100%; border: 2px solid #22201e; border-radius: 8px; padding: 8px 12px; font-family: inherit; font-size: 14px; background: #fbfaf7; box-shadow: 2px 2px 0px #22201e; box-sizing: border-box; resize: vertical; margin-top: 8px;"></textarea>
                     </div>
                     <div class="settings-row">
                         <span>Local chat cache</span>

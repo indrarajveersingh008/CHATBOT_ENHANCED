@@ -31,7 +31,11 @@ app.add_middleware(
 
 @app.get("/")
 def home():
-    return {"status": "Running", "application": "AI Nexus"}
+    return {
+        "status": "Running",
+        "application": "AI Nexus",
+        "features": ["402_retry", "persona_selection"]
+    }
 
 
 app.include_router(auth.router)

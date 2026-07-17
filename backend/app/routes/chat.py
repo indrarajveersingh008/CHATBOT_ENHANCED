@@ -23,6 +23,7 @@ class ChatRequest(BaseModel):
     conversation_id: Optional[int] = None
     model_name: Optional[str] = None
     file_ids: Optional[list[int]] = None
+    system_prompt: Optional[str] = None
 
 
 @router.post("/chat")
@@ -128,7 +129,14 @@ def chat(request: ChatRequest, db: Session = Depends(get_db), current_user: User
             print(f"Auto-switching to vision model for image analysis (was: {requested_model})")
             requested_model = settings.DEFAULT_VISION_MODEL
 
-        reply = ask_ai(request.message, history, files_context, requested_model, attached_images=attached_images)
+        reply = ask_ai(
+            request.message,
+            history,
+            files_context,
+            requested_model,
+            attached_images=attached_images,
+            system_prompt=request.system_prompt
+        )
 
         bot_msg = Message(conversation_id=conversation.id, sender="bot", content=reply)
         db.add(bot_msg)
@@ -154,6 +162,7 @@ class EditRequest(BaseModel):
     message_id: int
     message: str
     model_name: Optional[str] = None
+    system_prompt: Optional[str] = None
 
 
 @router.post("/chat/edit")
@@ -254,7 +263,14 @@ def edit_or_retry(request: EditRequest, db: Session = Depends(get_db), current_u
             requested_model = settings.DEFAULT_VISION_MODEL
 
         # 7. Query AI
-        reply = ask_ai(request.message, history, files_context, requested_model, attached_images=attached_images)
+        reply = ask_ai(
+            request.message,
+            history,
+            files_context,
+            requested_model,
+            attached_images=attached_images,
+            system_prompt=request.system_prompt
+        )
 
         # 8. Save bot response
         bot_msg = Message(conversation_id=conversation.id, sender="bot", content=reply)

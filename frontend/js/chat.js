@@ -266,12 +266,16 @@ async function sendMessage() {
     try {
         ensureVisionModelForAttachments(filesToSend);
         const selectedModel = localStorage.getItem("selectedModel") || "deepseek/deepseek-chat-v3-0324";
-        const data = await Api.sendMessage(text, AppState.currentConversationId, selectedModel, fileIds);
+        const data = await Api.sendMessage(text, AppState.currentConversationId, selectedModel, fileIds, Settings.getActiveSystemPrompt());
 
         hideTyping();
         sendBtn.disabled = false;
         sendBtn.innerHTML = "➤";
         if (chatAttachBtn) chatAttachBtn.disabled = false;
+
+        if (data.error) {
+            console.error("Backend error detail:", data.error);
+        }
 
         if (!data.reply) {
             throw new Error("No 'reply' received from backend.");
@@ -471,11 +475,14 @@ async function submitEdit(messageEl, newText) {
     showTyping();
     try {
         const selectedModel = localStorage.getItem("selectedModel") || "deepseek/deepseek-chat-v3-0324";
-        const data = await Api.editOrRetryMessage(parseInt(messageId), newText, selectedModel);
+        const data = await Api.editOrRetryMessage(parseInt(messageId), newText, selectedModel, Settings.getActiveSystemPrompt());
         hideTyping();
         sendBtn.disabled = false;
         sendBtn.innerHTML = "➤";
         if (chatAttachBtn) chatAttachBtn.disabled = false;
+        if (data.error) {
+            console.error("Backend error detail:", data.error);
+        }
         if (!data.reply) {
             throw new Error("No 'reply' received from backend.");
         }
@@ -556,11 +563,14 @@ async function retryResponse(botMessageEl) {
     showTyping();
     try {
         const selectedModel = localStorage.getItem("selectedModel") || "deepseek/deepseek-chat-v3-0324";
-        const data = await Api.editOrRetryMessage(parseInt(messageId), userMessageEl.dataset.rawText, selectedModel);
+        const data = await Api.editOrRetryMessage(parseInt(messageId), userMessageEl.dataset.rawText, selectedModel, Settings.getActiveSystemPrompt());
         hideTyping();
         sendBtn.disabled = false;
         sendBtn.innerHTML = "➤";
         if (chatAttachBtn) chatAttachBtn.disabled = false;
+        if (data.error) {
+            console.error("Backend error detail:", data.error);
+        }
         if (!data.reply) {
             throw new Error("No 'reply' received from backend.");
         }

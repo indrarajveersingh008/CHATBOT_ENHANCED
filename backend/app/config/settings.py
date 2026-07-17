@@ -7,6 +7,7 @@ load_dotenv()
 class Settings:
     OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "")
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
     MODEL_NAME: str = os.getenv("MODEL_NAME", "deepseek/deepseek-chat-v3-0324")
     MAX_TOKENS: int = int(os.getenv("MAX_TOKENS", "1024"))
 

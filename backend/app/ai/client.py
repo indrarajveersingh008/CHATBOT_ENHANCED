@@ -3,10 +3,19 @@ from openai import OpenAI
 
 from ..config.settings import settings
 
-client = OpenAI(
+# OpenRouter Client
+openrouter_client = OpenAI(
     api_key=settings.OPENROUTER_API_KEY,
     base_url=settings.OPENROUTER_BASE_URL,
 )
+
+# Gemini (Google AI Studio) Client
+gemini_client = None
+if settings.GEMINI_API_KEY:
+    gemini_client = OpenAI(
+        api_key=settings.GEMINI_API_KEY,
+        base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+    )
 
 SYSTEM_PROMPT = """
 You are AI Nexus, an intelligent AI assistant created by Rajveer Singh.
@@ -38,7 +47,8 @@ def ask_ai(
     history: list[dict] | None = None,
     files_context: str | None = None,
     model_name: str | None = None,
-    attached_images: list[dict] | None = None
+    attached_images: list[dict] | None = None,
+    system_prompt: str | None = None
 ) -> str:
     """
     Send a message (plus any prior turns for context) to the model and
@@ -49,18 +59,18 @@ def ask_ai(
     model_name: custom model string to route the request to OpenRouter.
     attached_images: optional list of {"content_type": str, "base64_data": str}
     """
-    system_prompt = SYSTEM_PROMPT
+    sys_prompt = system_prompt if system_prompt else SYSTEM_PROMPT
     if files_context:
-        system_prompt += f"\n\n--- UPLOADED FILES CONTEXT ---\nYou have access to the following files uploaded by the user. Use this information to answer their questions if relevant:\n{files_context}\n-----------------------------"
+        sys_prompt += f"\n\n--- UPLOADED FILES CONTEXT ---\nYou have access to the following files uploaded by the user. Use this information to answer their questions if relevant:\n{files_context}\n-----------------------------"
     if attached_images:
-        system_prompt += (
+        sys_prompt += (
             "\n\nIMAGE ANALYSIS:\n"
             "The user has attached one or more images to this message. You CAN see and analyze them. "
             "Describe what you see and answer questions about the image content accurately. "
             "Do not say you cannot view or analyze images."
         )
 
-    messages = [{"role": "system", "content": system_prompt}]
+    messages = [{"role": "system", "content": sys_prompt}]
 
     if history:
         for turn in history:
@@ -84,10 +94,20 @@ def ask_ai(
     current_max_tokens = settings.MAX_TOKENS
     completion = None
 
+    # Determine which client to use
+    active_client = openrouter_client
+    model_to_request = chosen_model
+
+    # Route directly to Google AI Studio if GEMINI_API_KEY is configured and it is a Gemini model
+    if gemini_client and ("gemini" in chosen_model.lower()):
+        active_client = gemini_client
+        if "/" in chosen_model:
+            model_to_request = chosen_model.split("/")[-1]
+
     for attempt in range(3):
         try:
-            completion = client.chat.completions.create(
-                model=chosen_model,
+            completion = active_client.chat.completions.create(
+                model=model_to_request,
                 messages=messages,
                 max_tokens=current_max_tokens,
                 temperature=0.7,
@@ -95,6 +115,26 @@ def ask_ai(
             break
         except Exception as e:
             err_msg = str(e)
+            print(f"[RETRY DEBUG] Caught exception: {type(e).__name__} - {err_msg}")
+            
+            # Check for 429 Rate Limit
+            is_429 = False
+            if hasattr(e, "status_code") and e.status_code == 429:
+                is_429 = True
+            elif "429" in err_msg or "rate-limited" in err_msg or "rate limit" in err_msg:
+                is_429 = True
+
+            if is_429 and attempt < 2:
+                import time
+                wait_time = 2.0
+                match = re.search(r"retry_after_seconds[\'\"]?:\s*(\d+)", err_msg)
+                if match:
+                    wait_time = float(match.group(1))
+                wait_time = min(5.0, wait_time)
+                print(f"[RETRY DEBUG] OpenRouter 429 rate limit. Sleeping for {wait_time} seconds before retrying...")
+                time.sleep(wait_time)
+                continue
+
             is_402 = False
             if hasattr(e, "status_code") and e.status_code == 402:
                 is_402 = True
@@ -108,15 +148,21 @@ def ask_ai(
                     # Request slightly less than afforded to be safe, but at least 1
                     new_max_tokens = max(1, afforded - 5)
                     if new_max_tokens < current_max_tokens:
-                        print(f"OpenRouter 402 error: requested {current_max_tokens}, can only afford {afforded}. Retrying with max_tokens={new_max_tokens}")
+                        print(f"[RETRY DEBUG] OpenRouter 402 error: requested {current_max_tokens}, can only afford {afforded}. Retrying with max_tokens={new_max_tokens}")
                         current_max_tokens = new_max_tokens
                         continue
+                    else:
+                        print(f"[RETRY DEBUG] Cannot reduce max_tokens further: new_max_tokens={new_max_tokens} >= current_max_tokens={current_max_tokens}")
                 else:
                     new_max_tokens = current_max_tokens // 2
                     if new_max_tokens >= 50:
-                        print(f"OpenRouter 402 error: Retrying with halved max_tokens={new_max_tokens}")
+                        print(f"[RETRY DEBUG] OpenRouter 402 error: Retrying with halved max_tokens={new_max_tokens}")
                         current_max_tokens = new_max_tokens
                         continue
+                    else:
+                        print(f"[RETRY DEBUG] Cannot halve max_tokens further: new_max_tokens={new_max_tokens} < 50")
+            else:
+                print(f"[RETRY DEBUG] Not retrying: is_402={is_402}, attempt={attempt}")
             raise e
 
     if not completion or not completion.choices:
@@ -142,9 +188,18 @@ def generate_conversation_title(first_message: str, model_name: str | None = Non
         {"role": "system", "content": "You are a title generator. Return only the raw title text without punctuation or quotes."},
         {"role": "user", "content": prompt}
     ]
+
+    active_client = openrouter_client
+    model_to_request = chosen_model
+
+    if gemini_client and ("gemini" in chosen_model.lower()):
+        active_client = gemini_client
+        if "/" in chosen_model:
+            model_to_request = chosen_model.split("/")[-1]
+
     try:
-        completion = client.chat.completions.create(
-            model=chosen_model,
+        completion = active_client.chat.completions.create(
+            model=model_to_request,
             messages=messages,
             max_tokens=20,
             temperature=0.5,

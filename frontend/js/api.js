@@ -57,7 +57,7 @@ const Api = {
 
     /* ---------- Chat ---------- */
 
-    async sendMessage(message, conversationId, modelName, fileIds = null) {
+    async sendMessage(message, conversationId, modelName, fileIds = null, systemPrompt = null) {
         const response = await fetch(`${getApiBaseUrl()}/chat`, {
             method: "POST",
             headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -65,20 +65,22 @@ const Api = {
                 message,
                 conversation_id: conversationId ?? null,
                 model_name: modelName ?? null,
-                file_ids: fileIds ?? null
+                file_ids: fileIds ?? null,
+                system_prompt: systemPrompt ?? null
             })
         });
         return handleResponse(response);
     },
 
-    async editOrRetryMessage(messageId, message, modelName) {
+    async editOrRetryMessage(messageId, message, modelName, systemPrompt = null) {
         const response = await fetch(`${getApiBaseUrl()}/chat/edit`, {
             method: "POST",
             headers: getAuthHeaders({ "Content-Type": "application/json" }),
             body: JSON.stringify({
                 message_id: messageId,
                 message,
-                model_name: modelName ?? null
+                model_name: modelName ?? null,
+                system_prompt: systemPrompt ?? null
             })
         });
         return handleResponse(response);
