@@ -251,9 +251,9 @@ const Settings = {
         if (modelSelect) {
             const validModels = [
                 "meta-llama/llama-3.3-70b-instruct:free",
-                "google/gemini-2.0-flash-lite-preview-02-05:free",
                 "deepseek/deepseek-r1:free",
-                "qwen/qwen-2.5-coder-32b-instruct:free"
+                "qwen/qwen-2.5-coder-32b-instruct:free",
+                "openrouter/free"
             ];
             let savedModel = localStorage.getItem("selectedModel") || "meta-llama/llama-3.3-70b-instruct:free";
             if (!validModels.includes(savedModel)) {

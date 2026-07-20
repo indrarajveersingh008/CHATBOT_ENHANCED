@@ -15,8 +15,8 @@ const chatFilePreviews = document.getElementById("chatFilePreviews");
 
 let attachedFiles = [];
 
-const VISION_MODELS = new Set(["google/gemini-2.0-flash-lite-preview-02-05:free", "google/gemini-2.5-flash", "openai/gpt-4o-mini"]);
-const DEFAULT_VISION_MODEL = "google/gemini-2.0-flash-lite-preview-02-05:free";
+const VISION_MODELS = new Set(["google/gemini-2.5-flash", "openai/gpt-4o-mini", "openrouter/free"]);
+const DEFAULT_VISION_MODEL = "openrouter/free";
 
 function fileIsImage(file) {
     const ext = file.name.split(".").pop().toLowerCase();

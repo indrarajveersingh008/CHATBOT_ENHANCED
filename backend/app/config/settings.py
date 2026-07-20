@@ -13,11 +13,10 @@ class Settings:
 
     # Models that can analyze uploaded images (vision/multimodal)
     VISION_CAPABLE_MODELS: frozenset[str] = frozenset({
-        "google/gemini-2.0-flash-lite-preview-02-05:free",
         "google/gemini-2.5-flash",
-        "openai/gpt-4o-mini",
+        "openrouter/free",
     })
-    DEFAULT_VISION_MODEL: str = os.getenv("DEFAULT_VISION_MODEL", "google/gemini-2.0-flash-lite-preview-02-05:free")
+    DEFAULT_VISION_MODEL: str = os.getenv("DEFAULT_VISION_MODEL", "openrouter/free")
 
     # SQLite by default so the project runs with zero extra setup.
     # Set DATABASE_URL on Render/production to point at Postgres instead.
