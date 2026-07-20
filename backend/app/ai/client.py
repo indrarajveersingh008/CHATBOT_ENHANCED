@@ -102,7 +102,7 @@ def ask_ai(
     if gemini_client and ("gemini" in chosen_model.lower()):
         active_client = gemini_client
         if "/" in chosen_model:
-            model_to_request = chosen_model.split("/")[-1]
+            model_to_request = chosen_model.split("/")[-1].replace(":free", "")
 
     for attempt in range(3):
         try:
@@ -141,28 +141,26 @@ def ask_ai(
             elif "402" in err_msg or "fewer max_tokens" in err_msg or "can only afford" in err_msg:
                 is_402 = True
 
-            if is_402 and attempt < 2:
-                match = re.search(r"can only afford (\d+)", err_msg)
-                if match:
-                    afforded = int(match.group(1))
-                    # Request slightly less than afforded to be safe, but at least 1
-                    new_max_tokens = max(1, afforded - 5)
-                    if new_max_tokens < current_max_tokens:
-                        print(f"[RETRY DEBUG] OpenRouter 402 error: requested {current_max_tokens}, can only afford {afforded}. Retrying with max_tokens={new_max_tokens}")
-                        current_max_tokens = new_max_tokens
-                        continue
-                    else:
-                        print(f"[RETRY DEBUG] Cannot reduce max_tokens further: new_max_tokens={new_max_tokens} >= current_max_tokens={current_max_tokens}")
-                else:
-                    new_max_tokens = current_max_tokens // 2
-                    if new_max_tokens >= 50:
-                        print(f"[RETRY DEBUG] OpenRouter 402 error: Retrying with halved max_tokens={new_max_tokens}")
-                        current_max_tokens = new_max_tokens
-                        continue
-                    else:
-                        print(f"[RETRY DEBUG] Cannot halve max_tokens further: new_max_tokens={new_max_tokens} < 50")
-            else:
-                print(f"[RETRY DEBUG] Not retrying: is_402={is_402}, attempt={attempt}")
+            if is_402:
+                if gemini_client and active_client != gemini_client:
+                    print("[RETRY DEBUG] OpenRouter 402 error (Insufficient Credits). Attempting fallback to Gemini API client...")
+                    try:
+                        completion = gemini_client.chat.completions.create(
+                            model="gemini-2.5-flash",
+                            messages=messages,
+                            max_tokens=current_max_tokens,
+                            temperature=0.7,
+                        )
+                        print("[RETRY DEBUG] Fallback to Gemini API succeeded.")
+                        break
+                    except Exception as gemini_err:
+                        print(f"[RETRY DEBUG] Fallback to Gemini API failed: {gemini_err}")
+
+                raise ValueError(
+                    "OpenRouter Insufficient Credits (Error 402): Your OpenRouter account balance is 0 or insufficient for this paid model. "
+                    "Please top up your OpenRouter account at https://openrouter.ai/settings/credits or select Gemini 2.5 Flash in Settings."
+                ) from e
+
             raise e
 
     if not completion or not completion.choices:

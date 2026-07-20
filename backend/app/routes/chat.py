@@ -152,9 +152,11 @@ def chat(request: ChatRequest, db: Session = Depends(get_db), current_user: User
 
     except Exception as e:
         traceback.print_exc()
+        err_msg = str(e)
+        display_reply = err_msg if err_msg.startswith("⚠️") else f"⚠️ {err_msg}"
         return {
-            "reply": "⚠️ Sorry, I couldn't process your request.",
-            "error": str(e),
+            "reply": display_reply,
+            "error": err_msg,
         }
 
 
