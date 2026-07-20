@@ -23,7 +23,6 @@ class ChatRequest(BaseModel):
     conversation_id: Optional[int] = None
     model_name: Optional[str] = None
     file_ids: Optional[list[int]] = None
-    system_prompt: Optional[str] = None
 
 
 @router.post("/chat")
@@ -134,8 +133,7 @@ def chat(request: ChatRequest, db: Session = Depends(get_db), current_user: User
             history,
             files_context,
             requested_model,
-            attached_images=attached_images,
-            system_prompt=request.system_prompt
+            attached_images=attached_images
         )
 
         bot_msg = Message(conversation_id=conversation.id, sender="bot", content=reply)
@@ -164,7 +162,6 @@ class EditRequest(BaseModel):
     message_id: int
     message: str
     model_name: Optional[str] = None
-    system_prompt: Optional[str] = None
 
 
 @router.post("/chat/edit")
@@ -270,8 +267,7 @@ def edit_or_retry(request: EditRequest, db: Session = Depends(get_db), current_u
             history,
             files_context,
             requested_model,
-            attached_images=attached_images,
-            system_prompt=request.system_prompt
+            attached_images=attached_images
         )
 
         # 8. Save bot response

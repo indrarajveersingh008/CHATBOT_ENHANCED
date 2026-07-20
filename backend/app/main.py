@@ -34,7 +34,7 @@ def home():
     return {
         "status": "Running",
         "application": "AI Nexus",
-        "features": ["402_retry", "persona_selection"]
+        "features": ["402_retry"]
     }
 
 

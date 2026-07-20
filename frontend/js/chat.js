@@ -266,7 +266,7 @@ async function sendMessage() {
     try {
         ensureVisionModelForAttachments(filesToSend);
         const selectedModel = localStorage.getItem("selectedModel") || "deepseek/deepseek-chat-v3-0324";
-        const data = await Api.sendMessage(text, AppState.currentConversationId, selectedModel, fileIds, Settings.getActiveSystemPrompt());
+        const data = await Api.sendMessage(text, AppState.currentConversationId, selectedModel, fileIds);
 
         hideTyping();
         sendBtn.disabled = false;
@@ -475,7 +475,7 @@ async function submitEdit(messageEl, newText) {
     showTyping();
     try {
         const selectedModel = localStorage.getItem("selectedModel") || "deepseek/deepseek-chat-v3-0324";
-        const data = await Api.editOrRetryMessage(parseInt(messageId), newText, selectedModel, Settings.getActiveSystemPrompt());
+        const data = await Api.editOrRetryMessage(parseInt(messageId), newText, selectedModel);
         hideTyping();
         sendBtn.disabled = false;
         sendBtn.innerHTML = "➤";

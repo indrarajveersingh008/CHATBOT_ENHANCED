@@ -194,14 +194,6 @@ const Search = {
 /* ---------- Settings panel ---------- */
 
 const Settings = {
-    getActiveSystemPrompt() {
-        const persona = localStorage.getItem("selectedPersona") || "default";
-        if (persona === "custom") {
-            return localStorage.getItem("customSystemPrompt") || "";
-        }
-        return "";
-    },
-
     init() {
         // Elements
         const backendUrlInput = document.getElementById("backendUrlInput");
@@ -249,54 +241,10 @@ const Settings = {
         }
 
         if (modelSelect) {
-            const validModels = [
-                "meta-llama/llama-3.3-70b-instruct:free",
-                "deepseek/deepseek-r1:free",
-                "qwen/qwen-2.5-coder-32b-instruct:free",
-                "openrouter/free"
-            ];
-            let savedModel = localStorage.getItem("selectedModel") || "meta-llama/llama-3.3-70b-instruct:free";
-            if (!validModels.includes(savedModel)) {
-                savedModel = "meta-llama/llama-3.3-70b-instruct:free";
-                localStorage.setItem("selectedModel", savedModel);
-            }
+            let savedModel = localStorage.getItem("selectedModel") || "deepseek/deepseek-chat-v3-0324";
             modelSelect.value = savedModel;
             modelSelect.addEventListener("change", (e) => {
                 localStorage.setItem("selectedModel", e.target.value);
-            });
-        }
-
-        const personaSelect = document.getElementById("personaSelect");
-        const systemPromptTextarea = document.getElementById("systemPromptTextarea");
-
-        if (personaSelect && systemPromptTextarea) {
-            let savedPersona = localStorage.getItem("selectedPersona") || "default";
-            if (savedPersona !== "default" && savedPersona !== "custom") {
-                savedPersona = "default";
-                localStorage.setItem("selectedPersona", savedPersona);
-            }
-            personaSelect.value = savedPersona;
-
-            if (savedPersona === "custom") {
-                systemPromptTextarea.value = localStorage.getItem("customSystemPrompt") || "";
-                systemPromptTextarea.classList.remove("hidden");
-            } else {
-                systemPromptTextarea.classList.add("hidden");
-            }
-
-            personaSelect.addEventListener("change", (e) => {
-                const val = e.target.value;
-                localStorage.setItem("selectedPersona", val);
-                if (val === "custom") {
-                    systemPromptTextarea.value = localStorage.getItem("customSystemPrompt") || "";
-                    systemPromptTextarea.classList.remove("hidden");
-                } else {
-                    systemPromptTextarea.classList.add("hidden");
-                }
-            });
-
-            systemPromptTextarea.addEventListener("input", (e) => {
-                localStorage.setItem("customSystemPrompt", e.target.value);
             });
         }
 

@@ -47,8 +47,7 @@ def ask_ai(
     history: list[dict] | None = None,
     files_context: str | None = None,
     model_name: str | None = None,
-    attached_images: list[dict] | None = None,
-    system_prompt: str | None = None
+    attached_images: list[dict] | None = None
 ) -> str:
     """
     Send a message (plus any prior turns for context) to the model and
@@ -59,7 +58,7 @@ def ask_ai(
     model_name: custom model string to route the request to OpenRouter.
     attached_images: optional list of {"content_type": str, "base64_data": str}
     """
-    sys_prompt = system_prompt if system_prompt else SYSTEM_PROMPT
+    sys_prompt = SYSTEM_PROMPT
     if files_context:
         sys_prompt += f"\n\n--- UPLOADED FILES CONTEXT ---\nYou have access to the following files uploaded by the user. Use this information to answer their questions if relevant:\n{files_context}\n-----------------------------"
     if attached_images:
