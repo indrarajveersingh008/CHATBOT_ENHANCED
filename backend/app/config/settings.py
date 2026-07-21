@@ -8,7 +8,7 @@ class Settings:
     OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "")
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-    MODEL_NAME: str = os.getenv("MODEL_NAME", "meta-llama/llama-3.3-70b-instruct:free")
+    MODEL_NAME: str = os.getenv("MODEL_NAME", "google/gemini-2.5-flash")
     MAX_TOKENS: int = int(os.getenv("MAX_TOKENS", "1024"))
 
     # Models that can analyze uploaded images (vision/multimodal)
@@ -16,7 +16,7 @@ class Settings:
         "google/gemini-2.5-flash",
         "openrouter/free",
     })
-    DEFAULT_VISION_MODEL: str = os.getenv("DEFAULT_VISION_MODEL", "openrouter/free")
+    DEFAULT_VISION_MODEL: str = os.getenv("DEFAULT_VISION_MODEL", "google/gemini-2.5-flash")
 
     # SQLite by default so the project runs with zero extra setup.
     # Set DATABASE_URL on Render/production to point at Postgres instead.
@@ -39,5 +39,6 @@ class Settings:
 
 settings = Settings()
 
-if not settings.OPENROUTER_API_KEY:
-    print("⚠️  WARNING: OPENROUTER_API_KEY is not set. /chat will fail until it is.")
+if not settings.OPENROUTER_API_KEY and not settings.GEMINI_API_KEY:
+    print("⚠️  WARNING: Neither OPENROUTER_API_KEY nor GEMINI_API_KEY is set. /chat will fail until at least one is set.")
+

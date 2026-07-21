@@ -5,7 +5,7 @@ from ..config.settings import settings
 
 # OpenRouter Client
 openrouter_client = OpenAI(
-    api_key=settings.OPENROUTER_API_KEY,
+    api_key=settings.OPENROUTER_API_KEY or "dummy_key",
     base_url=settings.OPENROUTER_BASE_URL,
 )
 
@@ -49,15 +49,9 @@ def ask_ai(
     model_name: str | None = None,
     attached_images: list[dict] | None = None
 ) -> str:
-    """
-    Send a message (plus any prior turns for context) to the model and
-    return the reply text. Raises ValueError on an empty/invalid response.
+    if not settings.OPENROUTER_API_KEY and not settings.GEMINI_API_KEY:
+        raise ValueError("API Key missing: OPENROUTER_API_KEY or GEMINI_API_KEY is not set in backend settings (.env file).")
 
-    history: list of {"sender": "user"|"bot", "content": str}, oldest first.
-    files_context: optional text context extracted from uploaded files.
-    model_name: custom model string to route the request to OpenRouter.
-    attached_images: optional list of {"content_type": str, "base64_data": str}
-    """
     sys_prompt = SYSTEM_PROMPT
     if files_context:
         sys_prompt += f"\n\n--- UPLOADED FILES CONTEXT ---\nYou have access to the following files uploaded by the user. Use this information to answer their questions if relevant:\n{files_context}\n-----------------------------"
