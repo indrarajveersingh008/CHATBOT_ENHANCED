@@ -149,3 +149,165 @@
     max-width: 100%;
     height: auto;
 }
+
+/* ======================================
+   CODE BLOCK EXECUTION STYLING
+   ====================================== */
+
+.code-block-wrapper {
+    display: flex;
+    flex-direction: column;
+    margin: 16px 0;
+    border: 3px solid #22201e;
+    border-radius: 10px;
+    background: #0d1117; /* Dark background matching github-dark style */
+    box-shadow: 4px 4px 0px #22201e;
+    overflow: hidden;
+}
+
+.code-block-wrapper pre {
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 16px !important;
+}
+
+.code-block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #b8b4af;
+    padding: 8px 16px;
+    border-bottom: 3px solid #22201e;
+    color: #22201e;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.code-block-lang {
+    font-family: 'Courier New', Courier, monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.code-block-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.code-action-btn {
+    background: #fbfaf7;
+    border: 2px solid #22201e;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 2px 2px 0px #22201e;
+    transition: 0.1s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #22201e;
+}
+
+.code-action-btn svg {
+    width: 12px;
+    height: 12px;
+}
+
+.code-action-btn:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0px #22201e;
+}
+
+.code-action-btn:active {
+    transform: translate(1px, 1px);
+    box-shadow: none;
+}
+
+.code-execution-container {
+    border-top: 3px solid #22201e;
+    background: #161b22;
+    color: #c9d1d9;
+    font-family: 'Courier New', Courier, monospace;
+    display: flex;
+    flex-direction: column;
+    max-height: 400px;
+    transition: all 0.2s ease-out;
+}
+
+.code-execution-container.hidden {
+    display: none !important;
+}
+
+.code-execution-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0d1117;
+    padding: 8px 16px;
+    border-bottom: 2px solid #22201e;
+    font-size: 12px;
+    color: #8b949e;
+    font-weight: 700;
+}
+
+.code-execution-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.code-execution-controls button {
+    background: #21262d;
+    color: #c9d1d9;
+    border: 2px solid #30363d;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.1s;
+}
+
+.code-execution-controls button:hover {
+    background: #30363d;
+    border-color: #8b949e;
+}
+
+.code-execution-output-wrapper {
+    padding: 16px;
+    overflow-y: auto;
+    max-height: 350px;
+}
+
+.code-execution-console-output {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    color: #e6edf3 !important;
+    font-size: 13px !important;
+    line-height: 1.6 !important;
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+    overflow: visible !important;
+    font-family: 'Courier New', Courier, monospace !important;
+}
+
+.code-execution-console-output.hidden {
+    display: none !important;
+}
+
+.code-execution-preview-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.code-execution-preview-wrapper.hidden {
+    display: none !important;
+}
+

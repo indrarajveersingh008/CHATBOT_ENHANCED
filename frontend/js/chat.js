@@ -170,6 +170,8 @@ function addMessage(text, sender, save = true, files = null, id = null) {
         message.querySelectorAll("pre code").forEach((block) => hljs.highlightElement(block));
     }
 
+    setupCodeExecution(message);
+
     const copyBtn = message.querySelector(".copy-btn");
     if (copyBtn) {
         copyBtn.addEventListener("click", () => {
@@ -490,6 +492,10 @@ async function submitEdit(messageEl, newText) {
         const bubble = messageEl.querySelector(".bubble");
         if (bubble) {
             bubble.innerHTML = formatMessage(newText);
+            if (window.hljs) {
+                bubble.querySelectorAll("pre code").forEach((block) => hljs.highlightElement(block));
+            }
+            setupCodeExecution(messageEl);
         }
         delete messageEl.dataset.originalBubbleHtml;
         const msgIndex = chatHistory.findIndex(m => m.id && String(m.id) === String(messageId));
@@ -617,4 +623,321 @@ autoResizeInput();
 clearBtn.addEventListener("click", function () {
     if (!confirm("Start a new chat?")) return;
     startNewChat();
+});
+
+/* ======================================
+   CODE BLOCK EXECUTION RUNNERS
+   ====================================== */
+
+function loadScript(url) {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = url;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
+
+function setupCodeExecution(messageEl) {
+    const codeBlocks = messageEl.querySelectorAll("pre code");
+    codeBlocks.forEach(codeEl => {
+        const preEl = codeEl.parentElement;
+        if (!preEl || preEl.tagName !== "PRE" || preEl.parentElement.classList.contains("code-block-wrapper")) {
+            return;
+        }
+
+        let lang = "";
+        const classes = codeEl.className.split(" ");
+        for (const cls of classes) {
+            if (cls.startsWith("language-")) {
+                lang = cls.replace("language-", "").toLowerCase();
+            } else if (cls.startsWith("lang-")) {
+                lang = cls.replace("lang-", "").toLowerCase();
+            }
+        }
+
+        const executableLangs = ["javascript", "js", "html", "htm", "python", "py"];
+        const isExecutable = executableLangs.includes(lang);
+
+        // Create neubrutalist wrapper
+        const wrapper = document.createElement("div");
+        wrapper.className = "code-block-wrapper";
+
+        // Insert wrapper before preEl
+        preEl.parentNode.insertBefore(wrapper, preEl);
+        wrapper.appendChild(preEl);
+
+        // Create header
+        const header = document.createElement("div");
+        header.className = "code-block-header";
+
+        const langLabel = document.createElement("span");
+        langLabel.className = "code-block-lang";
+        langLabel.textContent = lang || "code";
+
+        const actions = document.createElement("div");
+        actions.className = "code-block-actions";
+
+        // Copy Code Button
+        const copyBtn = document.createElement("button");
+        copyBtn.className = "code-action-btn copy-code-btn";
+        copyBtn.title = "Copy Code";
+        copyBtn.innerHTML = `${SVG_COPY} <span>Copy</span>`;
+        copyBtn.addEventListener("click", () => {
+            navigator.clipboard.writeText(codeEl.textContent);
+            const btnSpan = copyBtn.querySelector("span");
+            btnSpan.textContent = "Copied!";
+            copyBtn.classList.add("copied");
+            setTimeout(() => {
+                copyBtn.innerHTML = `${SVG_COPY} <span>Copy</span>`;
+                copyBtn.classList.remove("copied");
+            }, 2000);
+        });
+        actions.appendChild(copyBtn);
+
+        // Run Code Button
+        if (isExecutable) {
+            const runBtn = document.createElement("button");
+            runBtn.className = "code-action-btn run-code-btn";
+            runBtn.title = "Run Code";
+            runBtn.innerHTML = `▶ <span>Run</span>`;
+            runBtn.addEventListener("click", () => {
+                executeCodeBlock(codeEl, lang, wrapper);
+            });
+            actions.appendChild(runBtn);
+        }
+
+        header.appendChild(langLabel);
+        header.appendChild(actions);
+        wrapper.insertBefore(header, preEl);
+    });
+}
+
+async function executeCodeBlock(codeEl, lang, wrapper) {
+    let outputContainer = wrapper.querySelector(".code-execution-container");
+    if (!outputContainer) {
+        outputContainer = document.createElement("div");
+        outputContainer.className = "code-execution-container";
+        outputContainer.innerHTML = `
+            <div class="code-execution-header">
+                <span class="code-execution-status">⚙️ Executing...</span>
+                <div class="code-execution-controls">
+                    <button class="code-execution-clear-btn" title="Clear Output">🧹 Clear</button>
+                    <button class="code-execution-close-btn" title="Close Pane">✕ Close</button>
+                </div>
+            </div>
+            <div class="code-execution-output-wrapper">
+                <pre class="code-execution-console-output"></pre>
+                <div class="code-execution-preview-wrapper hidden"></div>
+            </div>
+        `;
+        wrapper.appendChild(outputContainer);
+
+        outputContainer.querySelector(".code-execution-clear-btn").addEventListener("click", () => {
+            const consoleOut = outputContainer.querySelector(".code-execution-console-output");
+            if (consoleOut) consoleOut.textContent = "";
+            const previewWrap = outputContainer.querySelector(".code-execution-preview-wrapper");
+            if (previewWrap) previewWrap.innerHTML = "";
+        });
+
+        outputContainer.querySelector(".code-execution-close-btn").addEventListener("click", () => {
+            outputContainer.classList.add("hidden");
+        });
+    }
+
+    const execId = "exec-" + Math.random().toString(36).substr(2, 9);
+    outputContainer.dataset.execId = execId;
+    outputContainer.classList.remove("hidden");
+
+    const runStatus = outputContainer.querySelector(".code-execution-status");
+    const consoleOut = outputContainer.querySelector(".code-execution-console-output");
+    const previewWrap = outputContainer.querySelector(".code-execution-preview-wrapper");
+
+    consoleOut.classList.add("hidden");
+    consoleOut.textContent = "";
+    previewWrap.classList.add("hidden");
+    previewWrap.innerHTML = "";
+
+    const rawCode = codeEl.textContent;
+
+    if (lang === "html" || lang === "htm") {
+        runStatus.textContent = "🌐 Rendering Preview...";
+        previewWrap.classList.remove("hidden");
+
+        const iframe = document.createElement("iframe");
+        iframe.sandbox = "allow-scripts";
+        iframe.style.width = "100%";
+        iframe.style.height = "300px";
+        iframe.style.border = "2px solid #22201e";
+        iframe.style.background = "#ffffff";
+        iframe.style.borderRadius = "6px";
+        iframe.style.boxShadow = "2px 2px 0px #22201e";
+
+        const logWrapperScript = `
+            <script>
+                (function() {
+                    const wrap = (type) => (...args) => {
+                        window.parent.postMessage({
+                            type: 'console-log',
+                            execId: '${execId}',
+                            logType: type,
+                            text: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ')
+                        }, '*');
+                    };
+                    console.log = wrap('log');
+                    console.error = wrap('error');
+                    console.warn = wrap('warn');
+                    window.onerror = (msg, src, line) => {
+                        wrap('error')("Runtime Error: " + msg + " (line " + line + ")");
+                    };
+                })();
+            </script>
+        `;
+
+        try {
+            iframe.srcdoc = logWrapperScript + rawCode;
+            previewWrap.appendChild(iframe);
+            consoleOut.classList.remove("hidden");
+            runStatus.textContent = "🌐 Preview Ready";
+        } catch (err) {
+            runStatus.textContent = "❌ Failed";
+            consoleOut.classList.remove("hidden");
+            consoleOut.textContent = `Preview error: ${err.message}`;
+        }
+
+    } else if (lang === "javascript" || lang === "js") {
+        runStatus.textContent = "⚙️ Executing JS...";
+        consoleOut.classList.remove("hidden");
+
+        try {
+            const iframe = document.createElement("iframe");
+            iframe.style.display = "none";
+            iframe.sandbox = "allow-scripts";
+
+            const htmlContent = `
+                <script>
+                    (function() {
+                        const wrap = (type) => (...args) => {
+                            window.parent.postMessage({
+                                type: 'console-log',
+                                execId: '${execId}',
+                                logType: type,
+                                text: args.map(a => {
+                                    if (a === null) return 'null';
+                                    if (a === undefined) return 'undefined';
+                                    return typeof a === 'object' ? JSON.stringify(a) : String(a);
+                                }).join(' ')
+                            }, '*');
+                        };
+                        console.log = wrap('log');
+                        console.error = wrap('error');
+                        console.warn = wrap('warn');
+                        
+                        window.onerror = (msg, src, line) => {
+                            wrap('error')("Runtime Error: " + msg + " (line " + line + ")");
+                            return true;
+                        };
+                    })();
+                    
+                    try {
+                        ${rawCode}
+                    } catch (err) {
+                        console.error(err.stack || err.message);
+                    }
+                </script>
+            `;
+            iframe.srcdoc = htmlContent;
+            document.body.appendChild(iframe);
+
+            setTimeout(() => {
+                if (iframe.parentNode) {
+                    iframe.parentNode.removeChild(iframe);
+                }
+                if (runStatus.textContent === "⚙️ Executing JS...") {
+                    runStatus.textContent = "✅ Finished";
+                }
+            }, 1000);
+
+        } catch (err) {
+            consoleOut.textContent += `\n❌ Execution failed: ${err.message}`;
+            runStatus.textContent = "❌ Failed";
+        }
+
+    } else if (lang === "python" || lang === "py") {
+        runStatus.textContent = "⚙️ Loading Python Environment...";
+        consoleOut.classList.remove("hidden");
+
+        if (!window.pyodideLoading && !window.pyodide) {
+            window.pyodideLoading = true;
+            try {
+                await loadScript("https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js");
+                runStatus.textContent = "⚙️ Initializing Python VM...";
+                window.pyodide = await loadPyodide({
+                    indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.1/full/"
+                });
+                window.pyodideLoading = false;
+            } catch (err) {
+                window.pyodideLoading = false;
+                runStatus.textContent = "❌ Load Failed";
+                consoleOut.textContent = `Failed to load Pyodide environment: ${err.message}`;
+                return;
+            }
+        } else if (window.pyodideLoading) {
+            while (window.pyodideLoading) {
+                await new Promise(r => setTimeout(r, 100));
+            }
+        }
+
+        runStatus.textContent = "⚙️ Running Python Code...";
+        try {
+            const decoder = new TextDecoder("utf-8");
+            window.pyodide.setStdout({
+                write: (buffer) => {
+                    const text = decoder.decode(buffer);
+                    consoleOut.textContent += text;
+                    const wrapper = outputContainer.querySelector(".code-execution-output-wrapper");
+                    if (wrapper) wrapper.scrollTop = wrapper.scrollHeight;
+                    return buffer.length;
+                }
+            });
+            window.pyodide.setStderr({
+                write: (buffer) => {
+                    const text = decoder.decode(buffer);
+                    consoleOut.textContent += text;
+                    const wrapper = outputContainer.querySelector(".code-execution-output-wrapper");
+                    if (wrapper) wrapper.scrollTop = wrapper.scrollHeight;
+                    return buffer.length;
+                }
+            });
+
+            await window.pyodide.runPythonAsync(rawCode);
+            runStatus.textContent = "✅ Python Finished";
+        } catch (err) {
+            consoleOut.textContent += `❌ Python Error:\n${err.message}\n`;
+            runStatus.textContent = "❌ Python Error";
+        }
+    }
+}
+
+// Global console log message listener for sandboxed executions
+window.addEventListener("message", (event) => {
+    if (event.data && event.data.type === "console-log") {
+        const { execId, logType, text } = event.data;
+        const container = document.querySelector(`[data-exec-id="${execId}"]`);
+        if (container) {
+            const consoleOut = container.querySelector(".code-execution-console-output");
+            if (consoleOut) {
+                let prefix = "";
+                if (logType === "error") prefix = "❌ ";
+                else if (logType === "warn") prefix = "⚠️ ";
+                consoleOut.textContent += prefix + text + "\n";
+                
+                const wrapper = container.querySelector(".code-execution-output-wrapper");
+                if (wrapper) {
+                    wrapper.scrollTop = wrapper.scrollHeight;
+                }
+            }
+        }
+    }
 });
