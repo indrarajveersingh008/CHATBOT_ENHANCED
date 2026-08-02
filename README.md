@@ -64,7 +64,7 @@ Open `frontend/index.html` directly, or serve the folder with any static server
 
 ## Features
 
-- 💬 **Chat** — talks to an LLM via OpenRouter, with conversation memory sent as context.
+- 💬 **Chat** — talks to an LLM via OpenRouter and Gemini with conversation memory sent as context.
 - 🧠 **Memory** — past conversations are saved server-side and browsable/deletable.
 - 📂 **Files** — upload, list, download, and delete files (stored on the server).
 - 🌐 **Search** — full-text search across every message you've ever sent/received.
