@@ -1,4 +1,61 @@
+import urllib.request
+import urllib.parse
+import re
 from duckduckgo_search import DDGS
+
+def fallback_urllib_search(query: str) -> list[dict]:
+    """
+    Direct urllib-based scraper for duckduckgo.com HTML search page.
+    Used as a fallback if the third-party library is blocked or returns empty.
+    """
+    try:
+        print(f"[SEARCH UTILITY] Running fallback urllib search for: '{query}'")
+        url = "https://html.duckduckgo.com/html/"
+        data = urllib.parse.urlencode({"q": query}).encode("utf-8")
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+        }
+        req = urllib.request.Request(url, data=data, headers=headers)
+        with urllib.request.urlopen(req, timeout=10) as response:
+            html_content = response.read().decode("utf-8", errors="ignore")
+            
+        results = []
+        blocks = html_content.split('class="result')
+        for block in blocks[1:]:  # Skip the first block before the first result
+            a_match = re.search(r'class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)</a>', block, re.DOTALL)
+            snippet_match = re.search(r'class="result__snippet"[^>]*>(.*?)</a>', block, re.DOTALL)
+            
+            if a_match and snippet_match:
+                href = a_match.group(1)
+                # Clean href if it is a DDG redirect, e.g., //duckduckgo.com/l/?uddg=URL
+                if "uddg=" in href:
+                    try:
+                        parsed_href = urllib.parse.urlparse(href)
+                        query_params = urllib.parse.parse_qs(parsed_href.query)
+                        if "uddg" in query_params:
+                            href = query_params["uddg"][0]
+                    except Exception as parse_err:
+                        print(f"[SEARCH UTILITY] Error parsing redirect URL: {parse_err}")
+                
+                # Strip HTML tags from title and snippet
+                title = re.sub(r'<[^>]+>', '', a_match.group(2)).strip()
+                body = re.sub(r'<[^>]+>', '', snippet_match.group(1)).strip()
+                
+                if title and body:
+                    results.append({
+                        "title": title,
+                        "href": href,
+                        "body": body
+                    })
+                    if len(results) >= 3:
+                        break
+        print(f"[SEARCH UTILITY] Fallback urllib search completed. Found {len(results)} results.")
+        return results
+    except Exception as e:
+        print(f"[SEARCH UTILITY] Fallback urllib search failed: {e}")
+        return []
 
 def search_the_web(query: str) -> str:
     """
@@ -33,6 +90,10 @@ def search_the_web(query: str) -> str:
         except Exception as e:
             print(f"[SEARCH UTILITY] Auto backend failed: {e}")
             last_err = e
+
+    # Fallback to custom urllib scraper if ddgs library failed or returned empty results
+    if not results:
+        results = fallback_urllib_search(query)
 
     try:
         if not results:
