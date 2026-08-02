@@ -9,6 +9,7 @@ class Settings:
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
     XAI_API_KEY: str = os.getenv("XAI_API_KEY", "")
+    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
     MODEL_NAME: str = os.getenv("MODEL_NAME", "google/gemini-2.5-flash")
     MAX_TOKENS: int = int(os.getenv("MAX_TOKENS", "1024"))
 

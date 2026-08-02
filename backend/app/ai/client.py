@@ -22,10 +22,19 @@ if settings.GEMINI_API_KEY:
 
 # xAI (Grok) Client
 xai_client = None
-if settings.XAI_API_KEY:
+if settings.XAI_API_KEY and not settings.XAI_API_KEY.startswith("gsk_"):
     xai_client = OpenAI(
         api_key=settings.XAI_API_KEY,
         base_url="https://api.x.ai/v1"
+    )
+
+# Groq Client (Free Llama 3.3)
+groq_client = None
+groq_api_key = settings.GROQ_API_KEY or (settings.XAI_API_KEY if settings.XAI_API_KEY.startswith("gsk_") else "")
+if groq_api_key:
+    groq_client = OpenAI(
+        api_key=groq_api_key,
+        base_url="https://api.groq.com/openai/v1"
     )
 
 SYSTEM_PROMPT = """
@@ -122,6 +131,11 @@ def ask_ai(
     # Route directly to xAI if XAI_API_KEY is configured and it is an xAI/Grok model
     elif xai_client and (chosen_model.startswith("xai/") or "grok" in chosen_model.lower()):
         active_client = xai_client
+        if "/" in chosen_model:
+            model_to_request = chosen_model.split("/")[-1]
+    # Route directly to Groq if groq_client is configured and it is a Groq model
+    elif groq_client and (chosen_model.startswith("groq/") or "groq" in chosen_model.lower()):
+        active_client = groq_client
         if "/" in chosen_model:
             model_to_request = chosen_model.split("/")[-1]
 
@@ -292,6 +306,10 @@ def check_needs_search(message: str, model_name: str | None = None) -> str | Non
             model_to_request = chosen_model.split("/")[-1].replace(":free", "")
     elif xai_client and (chosen_model.startswith("xai/") or "grok" in chosen_model.lower()):
         active_client = xai_client
+        if "/" in chosen_model:
+            model_to_request = chosen_model.split("/")[-1]
+    elif groq_client and (chosen_model.startswith("groq/") or "groq" in chosen_model.lower()):
+        active_client = groq_client
         if "/" in chosen_model:
             model_to_request = chosen_model.split("/")[-1]
 
