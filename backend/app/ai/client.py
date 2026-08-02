@@ -20,6 +20,14 @@ if settings.GEMINI_API_KEY:
         base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
     )
 
+# xAI (Grok) Client
+xai_client = None
+if settings.XAI_API_KEY:
+    xai_client = OpenAI(
+        api_key=settings.XAI_API_KEY,
+        base_url="https://api.x.ai/v1"
+    )
+
 SYSTEM_PROMPT = """
 You are AI Nexus, an intelligent AI assistant created by Rajveer Singh.
 
@@ -111,6 +119,11 @@ def ask_ai(
         active_client = gemini_client
         if "/" in chosen_model:
             model_to_request = chosen_model.split("/")[-1].replace(":free", "")
+    # Route directly to xAI if XAI_API_KEY is configured and it is an xAI/Grok model
+    elif xai_client and (chosen_model.startswith("xai/") or "grok" in chosen_model.lower()):
+        active_client = xai_client
+        if "/" in chosen_model:
+            model_to_request = chosen_model.split("/")[-1]
 
     original_gemini_err = None
     for attempt in range(3):
@@ -277,6 +290,10 @@ def check_needs_search(message: str, model_name: str | None = None) -> str | Non
         active_client = gemini_client
         if "/" in chosen_model:
             model_to_request = chosen_model.split("/")[-1].replace(":free", "")
+    elif xai_client and (chosen_model.startswith("xai/") or "grok" in chosen_model.lower()):
+        active_client = xai_client
+        if "/" in chosen_model:
+            model_to_request = chosen_model.split("/")[-1]
 
     try:
         try:
