@@ -2,6 +2,9 @@ import re
 from openai import OpenAI
 
 from ..config.settings import settings
+from datetime import datetime
+from ..utils.search import search_the_web
+
 
 # OpenRouter Client
 openrouter_client = OpenAI(
@@ -53,6 +56,18 @@ def ask_ai(
         raise ValueError("API Key missing: OPENROUTER_API_KEY or GEMINI_API_KEY is not set in backend settings (.env file).")
 
     sys_prompt = SYSTEM_PROMPT
+    
+    # Inject current date dynamically so the model always knows the correct time
+    current_date = datetime.now().strftime("%A, %B %d, %Y")
+    sys_prompt = f"Today's date is {current_date}.\n\n" + sys_prompt
+
+    # Check if this query requires real-time information retrieval
+    if not attached_images:
+        search_query = check_needs_search(message, model_name)
+        if search_query:
+            search_context = search_the_web(search_query)
+            sys_prompt += search_context
+
     if files_context:
         sys_prompt += f"\n\n--- UPLOADED FILES CONTEXT ---\nYou have access to the following files uploaded by the user. Use this information to answer their questions if relevant:\n{files_context}\n-----------------------------"
     if attached_images:
@@ -109,6 +124,13 @@ def ask_ai(
         except Exception as e:
             err_msg = str(e)
             print(f"[RETRY DEBUG] Caught exception: {type(e).__name__} - {err_msg}")
+            
+            # If direct Gemini client hit rate/quota limits, fall back to OpenRouter client immediately
+            if active_client == gemini_client and ("429" in err_msg or "quota" in err_msg.lower()):
+                print("[RETRY DEBUG] Direct Gemini API quota exceeded. Falling back to OpenRouter client...")
+                active_client = openrouter_client
+                model_to_request = chosen_model
+                continue
             
             # Check for 429 Rate Limit
             is_429 = False
@@ -206,3 +228,77 @@ def generate_conversation_title(first_message: str, model_name: str | None = Non
     if len(first_message.strip()) > 40:
         fallback += "..."
     return fallback or "New Chat"
+
+
+def check_needs_search(message: str, model_name: str | None = None) -> str | None:
+    """
+    Analyze the user's message to determine if it requires real-time information retrieval.
+    If it requires a search, returns an optimized search query (keywords).
+    Otherwise, returns None.
+    """
+    if len(message.strip()) < 4:
+        return None
+
+    chosen_model = model_name or settings.MODEL_NAME
+    prompt = (
+        f"Analyze this user query: \"{message}\"\n"
+        f"Determine if it requires real-time web search or current up-to-date information that a model with a past knowledge cutoff wouldn't know "
+        f"(e.g., current weather, live sports scores, today's news, current time/dates, stock prices, or events after 2024).\n\n"
+        f"Examples:\n"
+        f"Query: \"explain how solar panels work\"\n"
+        f"Response: NO_SEARCH\n\n"
+        f"Query: \"what is the current weather in Tokyo?\"\n"
+        f"Response: SEARCH: Tokyo current weather\n\n"
+        f"Query: \"who is winning the live football match between Arsenal and Chelsea?\"\n"
+        f"Response: SEARCH: Arsenal Chelsea live match score\n\n"
+        f"Query: \"who won the 2026 World Cup?\"\n"
+        f"Response: SEARCH: 2026 World Cup winner\n\n"
+        f"Query: \"{message}\"\n"
+        f"Response:"
+    )
+    messages = [
+        {"role": "system", "content": "You are a search query optimizer. Output SEARCH: <query> or NO_SEARCH only."},
+        {"role": "user", "content": prompt}
+    ]
+
+    active_client = openrouter_client
+    model_to_request = chosen_model
+
+    if gemini_client and ("gemini" in chosen_model.lower()):
+        active_client = gemini_client
+        if "/" in chosen_model:
+            model_to_request = chosen_model.split("/")[-1].replace(":free", "")
+
+    try:
+        try:
+            completion = active_client.chat.completions.create(
+                model=model_to_request,
+                messages=messages,
+                max_tokens=30,
+                temperature=0.0,
+            )
+        except Exception as e:
+            err_msg = str(e)
+            if active_client == gemini_client and ("429" in err_msg or "quota" in err_msg.lower()):
+                print("[SEARCH INTENT DEBUG] Direct Gemini API quota exceeded. Falling back to OpenRouter client for classification...")
+                active_client = openrouter_client
+                model_to_request = chosen_model
+                completion = active_client.chat.completions.create(
+                    model=model_to_request,
+                    messages=messages,
+                    max_tokens=30,
+                    temperature=0.0,
+                )
+            else:
+                raise e
+        if completion.choices and completion.choices[0].message.content:
+            response_text = completion.choices[0].message.content.strip()
+            print(f"[SEARCH INTENT] Intent classifier result for '{message}': {response_text}")
+            if response_text.startswith("SEARCH:"):
+                # Extract the query after "SEARCH:"
+                search_query = response_text.replace("SEARCH:", "", 1).strip()
+                return search_query
+    except Exception as e:
+        print(f"[SEARCH INTENT] Error during intent classification: {e}")
+    
+    return None
