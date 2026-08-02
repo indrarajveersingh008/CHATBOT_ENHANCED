@@ -38,6 +38,12 @@ def home():
     }
 
 
+@app.get("/test-search")
+def test_search(q: str):
+    from .utils.search import search_the_web
+    return {"query": q, "result": search_the_web(q)}
+
+
 app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(chat.router)
