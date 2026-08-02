@@ -284,7 +284,7 @@ def check_needs_search(message: str, model_name: str | None = None) -> str | Non
         f"Query: \"explain how solar panels work\"\n"
         f"Response: NO_SEARCH\n\n"
         f"Query: \"what is the current weather in Tokyo?\"\n"
-        f"Response: SEARCH: Tokyo current weather\n\n"
+        f"Response: SEARCH: Tokyo weather\n\n"
         f"Query: \"who is winning the live football match between Arsenal and Chelsea?\"\n"
         f"Response: SEARCH: Arsenal Chelsea live match score\n\n"
         f"Query: \"who won the 2026 World Cup?\"\n"

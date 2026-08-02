@@ -62,6 +62,12 @@ def search_the_web(query: str) -> str:
     Perform a search query on DuckDuckGo and return formatted text results
     with top 3 snippets for the AI to use as context.
     """
+    # Clean the query to improve search results accuracy on DuckDuckGo.
+    # Replace "current weather" with just "weather", and remove the word "current".
+    query = re.sub(r'\bcurrent weather\b', 'weather', query, flags=re.IGNORECASE)
+    query = re.sub(r'\bcurrent\b', '', query, flags=re.IGNORECASE).strip()
+    query = re.sub(r'\s+', ' ', query)
+
     backends = ["lite", "html"]
     results = None
     last_err = None
