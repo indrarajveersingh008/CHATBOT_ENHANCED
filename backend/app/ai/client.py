@@ -112,6 +112,7 @@ def ask_ai(
         if "/" in chosen_model:
             model_to_request = chosen_model.split("/")[-1].replace(":free", "")
 
+    original_gemini_err = None
     for attempt in range(3):
         try:
             completion = active_client.chat.completions.create(
@@ -128,6 +129,7 @@ def ask_ai(
             # If direct Gemini client hit rate/quota limits, fall back to OpenRouter client immediately
             if active_client == gemini_client and ("429" in err_msg or "quota" in err_msg.lower()):
                 print("[RETRY DEBUG] Direct Gemini API quota exceeded. Falling back to OpenRouter client...")
+                original_gemini_err = e
                 active_client = openrouter_client
                 model_to_request = chosen_model
                 continue
@@ -157,6 +159,10 @@ def ask_ai(
                 is_402 = True
 
             if is_402:
+                if original_gemini_err:
+                    print("[RETRY DEBUG] OpenRouter also failed with 402. Raising original Gemini quota exception...")
+                    raise original_gemini_err from e
+
                 if gemini_client and active_client != gemini_client:
                     print("[RETRY DEBUG] OpenRouter 402 error (Insufficient Credits). Attempting fallback to Gemini API client...")
                     try:
@@ -176,6 +182,9 @@ def ask_ai(
                     "Please top up your OpenRouter account at https://openrouter.ai/settings/credits or select Gemini 2.5 Flash in Settings."
                 ) from e
 
+            # If we had a Gemini error and everything else failed, raise it
+            if original_gemini_err:
+                raise original_gemini_err from e
             raise e
 
     if not completion or not completion.choices:
